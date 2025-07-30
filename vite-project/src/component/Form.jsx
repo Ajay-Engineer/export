@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import LogoPlaceholder from "../assets/rebeccaexim_logo.png"
 // Placeholder for the logo image. In a real application, you'd host this image.
-const LogoPlaceholder = "https://placehold.co/96x96/222E50/FFFFFF?text=Logo";
 
 const products = [
   "Herbal Extract Products",
@@ -156,13 +155,13 @@ export default function App() {
             <p className="text-lg text-gray-300 mb-8">
               Explore our premium export products and connect with us.
             </p>
-            <img src={LogoPlaceholder} alt="Rebecca Exim Logo" className="mx-auto w-24 h-24 rounded-full" />
+            <img src={LogoPlaceholder} alt="Rebecca Exim Logo" className="mx-auto w-24 h-24 " />
         </div>
       </div>
 
       {/* Contact Form */}
       <div className="relative z-10 px-4 sm:px-6 lg:px-8 flex justify-center">
-        <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl -mt-12 mb-20">
+        <div className="w-full max-w-4xl bg-gray-100 rounded-xl shadow-2xl -mt-12 mb-20">
           <div className="p-8">
             <p className="text-center text-gray-700 font-medium text-lg px-6 mb-8">
               Thanks for your interest! Kindly share your details below. Our team will reach out to you shortly.
