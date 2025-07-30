@@ -84,10 +84,8 @@ export default function Header() {
               <div
                 key="Products"
                 className="relative group"
+                onClick={() => setIsProductOpen(!isProductOpen)} 
 
-                // onClick={() => setIsProductOpen(!isProductOpen)} 
-                onMouseEnter={() => setIsProductOpen(true)}
-                onMouseLeave={() => setIsProductOpen(false)}
               >
                 <div className="flex items-center gap-1 text-xl font-bold text-black mt-3 hover:text-red-600 cursor-pointer">
                   {item.label}
