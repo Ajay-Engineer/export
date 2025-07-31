@@ -28,11 +28,11 @@ const AboutSection = () => {
           <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
             <h4 className="text-xl font-bold text-gray-800 mb-2">Why Choose Us?</h4>
             <ul className="space-y-3 text-gray-700 text-base">
-              <li><strong>🌐 Global Reach:</strong> Trusted network across continents.</li>
-              <li><strong>✅ Quality Assurance:</strong> Every batch meets international standards.</li>
-              <li><strong>📦 Timely Logistics:</strong> Strong ties with reliable shipping partners.</li>
-              <li><strong>🤝 Ethical Practices:</strong> Sustainability and fairness in sourcing.</li>
-              <li><strong>🔍 Customer-Centric:</strong> Solutions tailored to every client's need.</li>
+              <li><strong>Global Reach:</strong> Trusted network across continents.</li>
+              <li><strong>Quality Assurance:</strong> Every batch meets international standards.</li>
+              <li><strong>Timely Logistics:</strong> Strong ties with reliable shipping partners.</li>
+              <li><strong>Ethical Practices:</strong> Sustainability and fairness in sourcing.</li>
+              <li><strong> Customer-Centric:</strong> Solutions tailored to every client's need.</li>
             </ul>
           </div>
         </div>

@@ -6,6 +6,7 @@ import Rebecca_Hom_image_3 from "../assets/Rebecca_Hom_image_3.png";
 import Rebecca_Hom_image_4 from "../assets/Rebecca_Hom_image_4.png";
 import Rebecca_Hom_image_5 from "../assets/Rebecca_Hom_image_5.png";
 import Rebecca_Hom_image_6 from "../assets/Rebecca_Hom_image_6.png";
+import payment from "../assets/payment.png"
 
 const HeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -17,7 +18,7 @@ const HeroCarousel = () => {
       description: "Natural extracts from India's finest herbs – for health, wellness & personal care solutions.",
     },
     {
-      image: Rebecca_Hom_image_2,
+      image: payment,
       title: "Palm Jaggery Products",
       description: "Chemical-free palm jaggery and by-products straight from rural producers – healthy, natural & authentic.",
     },
@@ -27,17 +28,17 @@ const HeroCarousel = () => {
       description: "Durable, biodegradable coir products for agriculture, gardening & industrial use.",
     },
     {
-      image: Rebecca_Hom_image_4,
+      image: Rebecca_Hom_image_3,
       title: "Tea Powders",
       description: "Premium Indian teas – handpicked and processed for the perfect aroma, taste, and health.",
     },
     {
-      image: Rebecca_Hom_image_5,
+      image: Rebecca_Hom_image_4,
       title: "Health Mix",
       description: "Traditional multigrain health mixes – rich in protein, fiber & essential nutrients for all ages.",
     },
     {
-      image: Rebecca_Hom_image_2,
+      image: Rebecca_Hom_image_5,
       title: "Handicrafts",
       description: "Authentic Indian handicrafts – blending art, culture & sustainability in every piece.",
     },
@@ -56,7 +57,7 @@ const HeroCarousel = () => {
   }, [slides.length]);
 
   return (
-    <div className="relative w-full h-[60vh] md:h-[80vh] overflow-hidden">
+    <div className="relative w-full h-[100vh] md:h-[80vh] overflow-hidden">
       {slides.map((slide, index) => (
         <div
           key={index}
