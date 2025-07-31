@@ -1,114 +1,90 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 
-export default function HealthMixProducts() {
-  const products = [
-    {
-      id: 1,
-      name: "Multi-Grain Health Mix",
-      description: "Nutritious blend of multiple grains and pulses",
-      specifications: [
-        "Contains 7 grains",
-        "No preservatives",
-        "Rich in protein",
-        "Ready to cook"
-      ],
-      applications: [
-        "Breakfast porridge",
-        "Health drink",
-        "Dietary supplement"
-      ]
-    },
-    {
-      id: 2,
-      name: "Protein Power Mix",
-      description: "High-protein blend for active lifestyle",
-      specifications: [
-        "30g protein per serving",
-        "Natural ingredients",
-        "Easy to digest",
-        "Multiple flavors"
-      ],
-      applications: [
-        "Post-workout nutrition",
-        "Meal replacement",
-        "Weight management"
-      ]
-    },
-    {
-      id: 3,
-      name: "Kids Health Mix",
-      description: "Specially formulated mix for growing children",
-      specifications: [
-        "Balanced nutrition",
-        "Added vitamins",
-        "Child-friendly taste",
-        "Easy preparation"
-      ],
-      applications: [
-        "Children's nutrition",
-        "School meals",
-        "Growth support"
-      ]
-    }
-  ];
+import React from "react";
+import { motion } from "framer-motion";
+import ProductCard from "./Productclass";
 
+const products = [
+  {
+    title: "Multi-Grain Health Mix",
+    description: "Nutritious blend of multiple grains and pulses.",
+    image: "/images/multigrain-health-mix.png",
+    link: "/products/health-mix/multigrain",
+  },
+  {
+    title: "Protein Power Mix",
+    description: "High-protein blend for active lifestyle.",
+    image: "/images/protein-power-mix.png",
+    link: "/products/health-mix/protein-power",
+  },
+  {
+    title: "Kids Health Mix",
+    description: "Specially formulated mix for growing children.",
+    image: "/images/kids-health-mix.png",
+    link: "/products/health-mix/kids",
+  },
+  {
+    title: "Diabetic Health Mix",
+    description: "Low glycemic blend for diabetic wellness.",
+    image: "/images/diabetic-health-mix.png",
+    link: "/products/health-mix/diabetic",
+  },
+  {
+    title: "Women’s Wellness Mix",
+    description: "Specially crafted for women’s health needs.",
+    image: "/images/womens-wellness-mix.png",
+    link: "/products/health-mix/womens-wellness",
+  },
+  {
+    title: "Senior Nutrition Mix",
+    description: "Balanced nutrition for seniors.",
+    image: "/images/senior-nutrition-mix.png",
+    link: "/products/health-mix/senior-nutrition",
+  },
+];
+
+const HealthMixProducts = () => {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      <div className="mb-8">
-        <Link
-          to="/products"
-          className="inline-flex items-center text-red-600 hover:text-red-700"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to All Products
-        </Link>
+    <div className="bg-white">
+      {/* Banner Section */}
+      <div
+        className="relative h-[260px] bg-cover bg-center flex items-center justify-center text-white"
+        style={{ backgroundImage: "url('/images/healthmix-bg.jpg')" }}
+      >
+        <div className="absolute inset-0 bg-black/60"></div>
+        <div className="relative z-10 text-center">
+          <h1 className="text-4xl font-bold uppercase tracking-wide">
+            Health Mix Products
+          </h1>
+        </div>
       </div>
-      <h1 className="text-4xl font-bold mb-12">Health Mix Products</h1>
-      <div className="space-y-12">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h2 className="text-2xl font-semibold mb-4">{product.name}</h2>
-                <p className="text-gray-600 mb-6">{product.description}</p>
-                
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-2">Specifications:</h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {product.specifications.map((spec, index) => (
-                      <li key={index} className="text-gray-600">{spec}</li>
-                    ))}
-                  </ul>
-                </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Applications:</h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {product.applications.map((app, index) => (
-                      <li key={index} className="text-gray-600">{app}</li>
-                    ))}
-                  </ul>
-                </div>
+      {/* Product Section */}
+      <div className="max-w-7xl mx-auto px-4 py-14">
+        <h2 className="text-3xl font-bold text-center text-green-700 mb-12">
+          Explore Our Health Mixes
+        </h2>
 
-                <button className="mt-6 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
-                  Get Quote
-                </button>
-              </div>
-              <div className="flex items-center justify-center">
-                <div className="w-full h-64 bg-gray-200 rounded-lg">
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    Product Image
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          {products.map((product, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              viewport={{ once: true }}
+            >
+              <ProductCard
+                title={product.title}
+                description={product.description}
+                image={product.image}
+                link={product.link}
+              />
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default HealthMixProducts;
