@@ -24,14 +24,15 @@ export default function Header() {
   const navItems = [
     { label: "Home", href: "/" },
     { label: "Products", href: "/products" },
-    { label: "Brand", href: "/brand" },
+    { label: "About Us", href: "/about" },
     { label: "Contact Us", href: "/contact" },
+   
   ];
 
   const productCategories = [
     {
       name: "Herbal Extract Products",
-      path: "/products/herbal-extract",
+      path: "/products/herbal",
       icon: <Leaf className="w-4 h-4 text-red-600" />,
     },
     {
@@ -56,7 +57,7 @@ export default function Header() {
     },
     {
       name: "Handicrafts",
-      path: "/products/handicrafts",
+      path: "/products/handicraft",
       icon: <Hand className="w-4 h-4 text-red-600" />,
     },
     {
@@ -127,8 +128,8 @@ export default function Header() {
               </Link>
             )
           )}
-          <button className="bg-red-600 text-white px-4 py-1.5 text-lg rounded hover:bg-red-700 transition">
-            Get Quote
+          <button onClick={()=>{}} className="bg-red-600 text-white px-4 py-1.5 text-lg rounded hover:bg-red-700 transition">
+            Get Quote 
           </button>
         </nav>
 

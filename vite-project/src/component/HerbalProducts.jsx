@@ -64,7 +64,7 @@ export default function HerbalProducts() {
           Back to All Products
         </Link>
       </div>
-      <h1 className="text-4xl font-bold mb-12">Herbal Extract Products</h1>
+      <h1 className="text-4xl font-bold mb-12">Herbal Products</h1>
       <div className="space-y-12">
         {products.map((product) => (
           <div

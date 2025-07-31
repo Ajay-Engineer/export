@@ -13,7 +13,7 @@ export default function ProductsPage() {
   const products = [
     {
       name: "Herbal Extract Products",
-      path: "/products/herbal-extract",
+      path: "/products/herbal",
       icon: <Leaf className="w-8 h-8 text-red-600" />,
       description: "Natural herbal extracts for health and wellness",
     },
@@ -43,7 +43,7 @@ export default function ProductsPage() {
     },
     {
       name: "Handicrafts",
-      path: "/products/handicrafts",
+      path: "/products/handicraft",
       icon: <Hand className="w-8 h-8 text-red-600" />,
       description: "Beautiful handcrafted products",
     },
@@ -57,6 +57,7 @@ export default function ProductsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
+      {/* Top quick navigation bar */}
       <h1 className="text-4xl font-bold text-center mb-12">Our Products</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {products.map((product) => (

@@ -55,32 +55,46 @@ export default function Footer() {
           <h3 className="text-xl sm:text-2xl font-bold">Our Products</h3>
           <ul className="space-y-3 text-white/90">
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <FaCube className="text-white w-5 h-5" />
-              <span>Coir Products</span>
+              <a href="/products/coir" className="flex items-center space-x-3">
+                <FaCube className="text-white w-5 h-5" />
+                <span>Coir Products</span>
+              </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <FaMugHot className="text-white w-5 h-5" />
-              <span>Tea Varieties</span>
+              <a href="/products/tea" className="flex items-center space-x-3">
+                <FaMugHot className="text-white w-5 h-5" />
+                <span>Tea Varieties</span>
+              </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <FaHeartbeat className="text-white w-5 h-5" />
-              <span>Health Mix</span>
+              <a href="/products/health-mix" className="flex items-center space-x-3">
+                <FaHeartbeat className="text-white w-5 h-5" />
+                <span>Health Mix</span>
+              </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <FaPaintBrush className="text-white w-5 h-5" />
-              <span>Handicrafts</span>
+              <a href="/products/handicraft" className="flex items-center space-x-3">
+                <FaPaintBrush className="text-white w-5 h-5" />
+                <span>Handicrafts</span>
+              </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <FaEgg className="text-white w-5 h-5" />
-              <span>Egg Products</span>
+              <a href="/products/egg" className="flex items-center space-x-3">
+                <FaEgg className="text-white w-5 h-5" />
+                <span>Egg Products</span>
+              </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <FaLeaf className="text-white w-5 h-5" />
-              <span>Herbal Extract Products</span>
+              <a href="/products/herbal" className="flex items-center space-x-3">
+                <FaLeaf className="text-white w-5 h-5" />
+                <span>Herbal Extract Products</span>
+              </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <FaPagelines className="text-white w-5 h-5" />
-              <span>Palm Jaggery Products</span>
+              <a href="/products/palm-jaggery" className="flex items-center space-x-3">
+                <FaPagelines className="text-white w-5 h-5" />
+                <span>Palm Jaggery Products</span>
+              </a>
             </li>
           </ul>
         </div>

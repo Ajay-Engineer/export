@@ -13,7 +13,7 @@ export default function ProductCategory() {
   const { category } = useParams();
 
   const productCategories = {
-    "herbal-extract": {
+    "herbal": {
       name: "Herbal Extract Products",
       icon: <Leaf className="w-12 h-12 text-red-600" />,
       description:
