@@ -26,7 +26,6 @@ export default function Header() {
     { label: "Products", href: "/products" },
     { label: "About Us", href: "/about" },
     { label: "Contact Us", href: "/contact" },
-   
   ];
 
   const productCategories = [
@@ -85,15 +84,13 @@ export default function Header() {
               <div
                 key="Products"
                 className="relative group"
-                onClick={() => setIsProductOpen(!isProductOpen)} 
-
+                onClick={() => setIsProductOpen(!isProductOpen)}
               >
                 <div className="flex items-center gap-1 text-xl font-bold text-black mt-3 hover:text-red-600 cursor-pointer">
                   {item.label}
                   <ChevronDown className="w-4 h-4 mt-1" />
                 </div>
 
-                {/* Enhanced Dropdown */}
                 {isProductOpen && (
                   <div className="absolute left-0 mt-3 bg-white border border-gray-300 rounded-lg shadow-xl w-80 z-50 p-4">
                     <div className="flex items-center space-x-2 mb-3">
@@ -128,8 +125,11 @@ export default function Header() {
               </Link>
             )
           )}
-          <button onClick={()=>{}} className="bg-red-600 text-white px-4 py-1.5 text-lg rounded hover:bg-red-700 transition">
-            Get Quote 
+          <button
+            onClick={() => {}}
+            className="bg-red-600 text-white px-4 py-1.5 text-lg rounded hover:bg-red-700 transition"
+          >
+            Get Quote
           </button>
         </nav>
 
@@ -156,6 +156,7 @@ export default function Header() {
                       <Link
                         to={product.path}
                         className="block text-sm text-black hover:text-red-600"
+                        onClick={() => setIsOpen(false)}
                       >
                         {product.name}
                       </Link>
@@ -168,12 +169,16 @@ export default function Header() {
                 key={item.label}
                 to={item.href}
                 className="block text-sm text-black hover:text-red-600"
+                onClick={() => setIsOpen(false)}
               >
                 {item.label}
               </Link>
             )
           )}
-          <button className="mt-2 bg-red-600 text-white px-4 py-2 w-full rounded hover:bg-red-700 transition">
+          <button
+            className="mt-2 bg-red-600 text-white px-4 py-2 w-full rounded hover:bg-red-700 transition"
+            onClick={() => setIsOpen(false)}
+          >
             Get Quote
           </button>
         </div>
