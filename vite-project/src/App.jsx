@@ -31,6 +31,8 @@ import HandicraftProducts from "./component/HandicraftProducts";
 import CoirProducts from "./component/CoirProducts";
 import ProductCategory from "./component/ProductCategory";
 import ProductSubcategory from "./component/ProductSubcategory";
+import ProductDetailPage from "./component/ProductDetailPage";
+import ProductCreateForm from "./component/ProductCreateForm.jsx";
 
 
 
@@ -58,6 +60,8 @@ function App() {
             <Route path="/products/coir" element={<CoirProducts />} />
             <Route path="/products/category" element={<ProductCategory />} />
             <Route path="/products/subcategory" element={<ProductSubcategory />} />
+            <Route path="/products/:productId" element={<ProductDetailPage />} />
+            <Route path="/admin/add" element={<ProductCreateForm/>}/>
             
             {/* Company Information Routes */}
             <Route path="/certificates" element={<CertificatesSection />} />
