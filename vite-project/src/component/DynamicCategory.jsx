@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { db } from '../firebase/config';
-import { collection, getDocs } from 'firebase/firestore';
+const CATEGORY_API = '/api/categories';
+const PRODUCT_API = '/api/products';
 
 export default function DynamicCategory() {
   const { categoryPath } = useParams();
@@ -15,25 +15,24 @@ export default function DynamicCategory() {
     const fetchCategoryAndProducts = async () => {
       try {
         setLoading(true);
-        // Fetch category details
-        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
-        const categoryData = categoriesSnapshot.docs
-          .find(doc => doc.data().path === categoryPath);
-
-        if (!categoryData) {
+        // Fetch category details from backend
+        const catRes = await fetch(`${CATEGORY_API}`);
+        if (!catRes.ok) throw new Error('Failed to fetch categories');
+        const allCategories = await catRes.json();
+        const found = allCategories.find(c => c.path === categoryPath);
+        if (!found) {
           setError('Category not found');
+          setLoading(false);
           return;
         }
+        setCategory(found);
 
-        setCategory({ id: categoryData.id, ...categoryData.data() });
-
-        // Fetch products for this category
-        const productsSnapshot = await getDocs(collection(db, categoryPath));
-        const productsData = productsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setProducts(productsData);
+        // Fetch products for this category from backend
+        const prodRes = await fetch(`${PRODUCT_API}`);
+        if (!prodRes.ok) throw new Error('Failed to fetch products');
+        const allProducts = await prodRes.json();
+        const filtered = allProducts.filter(p => p.category === categoryPath);
+        setProducts(filtered || []);
       } catch (error) {
         console.error('Error fetching category:', error);
         setError('Failed to load category and products');
@@ -41,7 +40,6 @@ export default function DynamicCategory() {
         setLoading(false);
       }
     };
-
     fetchCategoryAndProducts();
   }, [categoryPath]);
 

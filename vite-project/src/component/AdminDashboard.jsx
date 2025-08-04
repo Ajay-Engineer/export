@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db } from "../firebase/config";
+
 
 import { Pencil, Trash2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,15 +8,22 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const navigate = useNavigate();
 
+
   const fetchProducts = async () => {
-    const querySnapshot = await getDocs(collection(db, "products"));
-    const fetched = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    setProducts(fetched);
+    const res = await fetch('/api/products');
+    if (!res.ok) throw new Error('Failed to fetch products');
+    const data = await res.json();
+    setProducts(data);
   };
 
+
   const handleDelete = async (id) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      await deleteDoc(doc(db, "products", id));
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        alert('Failed to delete product');
+        return;
+      }
       fetchProducts();
     }
   };
@@ -50,7 +56,7 @@ const AdminDashboard = () => {
             {products.map((prod) => (
               <tr key={prod.id} className="border-b">
                 <td className="p-2">
-                  <img src={prod.images?.[0]} alt={prod.title} className="w-16 h-16 object-cover rounded" />
+                  <img src={prod.images?.[0]} alt={prod.title} className="w-full max-w-[4rem] h-auto object-cover rounded mx-auto" />
                 </td>
                 <td className="p-2 font-medium">{prod.title}</td>
                 <td className="p-2">{prod.category}</td>

@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react';
-import { db } from '../firebase/config';
-import {
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-} from 'firebase/firestore';
+// Removed direct SQL client import. Use API calls only.
+const API_URL = '/api/categories';
 import { Loader2 } from 'lucide-react';
 
 export default function CategoryManagement() {
@@ -28,12 +21,10 @@ export default function CategoryManagement() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const querySnapshot = await getDocs(collection(db, 'categories'));
-      const categoriesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setCategories(categoriesData);
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Failed to fetch categories');
+        const data = await res.json();
+      setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
       setError('Failed to fetch categories');
@@ -63,27 +54,29 @@ export default function CategoryManagement() {
     try {
       setLoading(true);
       setError('');
-      
-      // Add to Firestore
-      await addDoc(collection(db, 'categories'), validatedCategory);
-      
-      // Reset form
-      setNewCategory({
-        name: '',
-        path: '',
-        icon: '',
-        description: ''
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validatedCategory),
       });
-      
-      // Refresh categories list
+      if (!res.ok) throw new Error('Failed to add category');
+      setNewCategory({ name: '', path: '', icon: '', description: '' });
       await fetchCategories();
-      
     } catch (error) {
       console.error('Error adding category:', error);
       setError('Failed to add category');
     } finally {
       setLoading(false);
     }
+        // Add to backend
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validatedCategory),
+        });
+        if (!res.ok) throw new Error('Failed to add category');
+        setNewCategory({ name: '', path: '', icon: '', description: '' });
+        await fetchCategories();
   };
 
   const handleUpdateCategory = async (categoryId, updatedData) => {
@@ -93,20 +86,27 @@ export default function CategoryManagement() {
     try {
       setLoading(true);
       setError('');
-      
-      // Update in Firestore
-      const categoryRef = doc(db, 'categories', categoryId);
-      await updateDoc(categoryRef, validatedCategory);
-      
-      // Refresh categories list
+      const res = await fetch(`${API_URL}/${categoryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validatedCategory),
+      });
+      if (!res.ok) throw new Error('Failed to update category');
       await fetchCategories();
-      
     } catch (error) {
       console.error('Error updating category:', error);
       setError('Failed to update category');
     } finally {
       setLoading(false);
     }
+        // Update in backend
+        const res = await fetch(`${API_URL}/${categoryId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validatedCategory),
+        });
+        if (!res.ok) throw new Error('Failed to update category');
+        await fetchCategories();
   };
 
   const handleDeleteCategory = async (categoryId, categoryPath) => {
@@ -117,26 +117,20 @@ export default function CategoryManagement() {
     try {
       setLoading(true);
       setError('');
-      
-      // Delete from Firestore
-      await deleteDoc(doc(db, 'categories', categoryId));
-      
-      // Also delete all products in this category
-      const productsSnapshot = await getDocs(collection(db, categoryPath));
-      const deletePromises = productsSnapshot.docs.map(productDoc => 
-        deleteDoc(doc(db, categoryPath, productDoc.id))
-      );
-      await Promise.all(deletePromises);
-      
-      // Refresh categories list
+      const res = await fetch(`${API_URL}/${categoryId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete category');
       await fetchCategories();
-      
     } catch (error) {
       console.error('Error deleting category:', error);
       setError('Failed to delete category');
     } finally {
       setLoading(false);
     }
+        // Delete from backend
+        const res = await fetch(`${API_URL}/${categoryId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete category');
+        // Optionally: delete all products in this category via backend if needed
+        await fetchCategories();
   };
 
   return (

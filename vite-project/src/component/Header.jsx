@@ -5,6 +5,7 @@ import {
   Menu,
   X,
   ChevronDown,
+  ChevronUp,
   Leaf,
   CakeSlice,
   Flower2,
@@ -20,6 +21,7 @@ import Logo from "../assets/rebeccaexim_logo.png";
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isProductOpen, setIsProductOpen] = useState(false);
+  const [isMobileProductOpen, setIsMobileProductOpen] = useState(false);
 
   const navItems = [
     { label: "Home", href: "/" },
@@ -69,9 +71,9 @@ export default function Header() {
   return (
     <header className="bg-gray-200 shadow-md w-full z-50 relative">
       <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo + Name */}
+        {/* Logo */}
         <div className="flex items-end space-x-2">
-          <img src={Logo} className="w-16 h-auto rounded-t-xl" alt="Logo" />
+          <img src={Logo} className="w-16 h-auto max-w-full rounded-t-xl" alt="Logo" />
           <span className="text-xl font-bold text-black whitespace-nowrap">
             REBECCA EXIM
           </span>
@@ -125,10 +127,7 @@ export default function Header() {
               </Link>
             )
           )}
-          <button
-            onClick={() => {}}
-            className="bg-red-600 text-white px-4 py-1.5 text-lg rounded hover:bg-red-700 transition"
-          >
+          <button className="bg-red-600 text-white px-4 py-1.5 text-lg rounded hover:bg-red-700 transition">
             Get Quote
           </button>
         </nav>
@@ -143,26 +142,41 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Nav */}
       {isOpen && (
         <div className="md:hidden bg-gray-100 px-4 pb-4 space-y-2">
           {navItems.map((item) =>
             item.label === "Products" ? (
-              <div key="mobile-products" className="space-y-1">
-                <div className="text-sm font-semibold text-black">Products</div>
-                <ul className="pl-2 space-y-1">
-                  {productCategories.map((product) => (
-                    <li key={product.name}>
-                      <Link
-                        to={product.path}
-                        className="block text-sm text-black hover:text-red-600"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {product.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+              <div key="mobile-products">
+                <div
+                  onClick={() => setIsMobileProductOpen(!isMobileProductOpen)}
+                  className="flex items-center justify-between cursor-pointer py-2 text-sm font-semibold text-black"
+                >
+                  <span>Products</span>
+                  {isMobileProductOpen ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </div>
+                {isMobileProductOpen && (
+                  <ul className="pl-4 space-y-1 mt-1">
+                    {productCategories.map((product) => (
+                      <li key={product.name}>
+                        <Link
+                          to={product.path}
+                          className="block text-sm text-black hover:text-red-600"
+                          onClick={() => {
+                            setIsOpen(false);
+                            setIsMobileProductOpen(false);
+                          }}
+                        >
+                          {product.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ) : (
               <Link

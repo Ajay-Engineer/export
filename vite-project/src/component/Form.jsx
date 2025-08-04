@@ -155,7 +155,7 @@ export default function App() {
             <p className="text-lg text-gray-300 mb-8">
               Explore our premium export products and connect with us.
             </p>
-            <img src={LogoPlaceholder} alt="Rebecca Exim Logo" className="mx-auto w-24 h-24 " />
+            <img src={LogoPlaceholder} alt="Rebecca Exim Logo" className="mx-auto w-24 h-24 max-w-full object-contain" />
         </div>
       </div>
 
