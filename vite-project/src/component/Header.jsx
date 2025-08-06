@@ -26,6 +26,8 @@ export default function Header() {
   const navItems = [
     { label: "Home", href: "/" },
     { label: "Products", href: "/products" },
+    { label: "Payment", href: "/payment" },
+    { label: "Brand", href: "/brand" },
     { label: "About Us", href: "/about" },
     { label: "Contact Us", href: "/contact" },
   ];
@@ -72,15 +74,15 @@ export default function Header() {
     <header className="bg-gray-200 shadow-md w-full z-50 relative">
       <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-end space-x-2">
-          <img src={Logo} className="w-16 h-auto max-w-full rounded-t-xl" alt="Logo" />
+        <Link to="/" className="flex items-end space-x-2 group">
+          <img src={Logo} className="w-16 h-auto max-w-full rounded-t-xl group-hover:opacity-80 transition" alt="Logo" />
           <span className="text-xl font-bold text-black whitespace-nowrap">
             REBECCA EXIM
           </span>
-        </div>
+        </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex space-x-8 items-center">
+        <nav className="hidden md:flex space-x-4 items-center ml-8">
           {navItems.map((item) =>
             item.label === "Products" ? (
               <div
@@ -88,11 +90,10 @@ export default function Header() {
                 className="relative group"
                 onClick={() => setIsProductOpen(!isProductOpen)}
               >
-                <div className="flex items-center gap-1 text-xl font-bold text-black mt-3 hover:text-red-600 cursor-pointer">
+                <div className="flex items-center gap-1 text-base font-semibold text-black hover:text-red-600 cursor-pointer">
                   {item.label}
                   <ChevronDown className="w-4 h-4 mt-1" />
                 </div>
-
                 {isProductOpen && (
                   <div className="absolute left-0 mt-3 bg-white border border-gray-300 rounded-lg shadow-xl w-80 z-50 p-4">
                     <div className="flex items-center space-x-2 mb-3">
@@ -121,24 +122,24 @@ export default function Header() {
               <Link
                 key={item.label}
                 to={item.href}
-                className="text-xl font-bold text-black mt-3 hover:text-red-600"
+                className="text-base font-semibold text-black hover:text-red-600 px-2 py-1"
               >
                 {item.label}
               </Link>
             )
           )}
-          <button className="bg-red-600 text-white px-4 py-1.5 text-lg rounded hover:bg-red-700 transition">
+          <button className="bg-red-600 text-white px-3 py-1 text-base rounded hover:bg-red-700 transition ml-2">
             Get Quote
           </button>
         </nav>
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden"
+          className="md:hidden ml-2 p-2 rounded-full border border-gray-400 bg-white shadow"
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle Menu"
         >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isOpen ? <X className="w-7 h-7 text-red-600" /> : <Menu className="w-7 h-7 text-black" />}
         </button>
       </div>
 
@@ -150,7 +151,7 @@ export default function Header() {
               <div key="mobile-products">
                 <div
                   onClick={() => setIsMobileProductOpen(!isMobileProductOpen)}
-                  className="flex items-center justify-between cursor-pointer py-2 text-sm font-semibold text-black"
+                  className="flex items-center justify-between cursor-pointer py-2 text-base font-semibold text-black"
                 >
                   <span>Products</span>
                   {isMobileProductOpen ? (
@@ -165,7 +166,7 @@ export default function Header() {
                       <li key={product.name}>
                         <Link
                           to={product.path}
-                          className="block text-sm text-black hover:text-red-600"
+                          className="block text-base text-black hover:text-red-600"
                           onClick={() => {
                             setIsOpen(false);
                             setIsMobileProductOpen(false);
@@ -182,7 +183,7 @@ export default function Header() {
               <Link
                 key={item.label}
                 to={item.href}
-                className="block text-sm text-black hover:text-red-600"
+                className="block text-base text-black hover:text-red-600"
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}
@@ -197,6 +198,7 @@ export default function Header() {
           </button>
         </div>
       )}
+      {/* Owner Name Banner */}
     </header>
   );
 }

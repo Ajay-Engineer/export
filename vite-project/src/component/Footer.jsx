@@ -7,6 +7,8 @@ import {
   FaHeartbeat,
   FaPaintBrush,
   FaEgg,
+  FaMapMarkerAlt,
+  FaXRay,
 } from "react-icons/fa";
 import Logo from "../assets/RebeccaExim_Logo1.jpg";
 import {
@@ -15,6 +17,7 @@ import {
   FaTwitter,
   FaLinkedinIn,
 } from "react-icons/fa";
+
 
 export default function Footer() {
   return (
@@ -29,6 +32,10 @@ export default function Footer() {
               alt="Logo"
               className="w-52 h-auto shadow-sm object-contain"
             />
+          </div>
+          {/* Slogan */}
+          <div className="flex flex-col items-center mt-2">
+            <span className="text-base sm:text-lg font-bold text-yellow-500 text-center">WHERE QUALITY MEETS GLOBAL DEMAND</span>
           </div>
           <p className="text-base sm:text-lg font-semibold leading-relaxed tracking-wide text-white/90">
             Rebecca Exim delivers premium organic products globally with quality
@@ -99,18 +106,31 @@ export default function Footer() {
           </ul>
         </div>
         {/* Contact Details */}
-       
+
         <div className="space-y-4">
           <h3 className="text-xl sm:text-2xl font-bold">Contact Details</h3>
           <ul className="space-y-3 text-lg text-white/90">
-            <li className="flex items-start space-x-3  hover:text-blue-400 transition">
-              <MapPin className="w-5 h-5 font-bold mt-1 text-white flex-shrink-0" />
-              <span>
+            <li className="flex items-center space-x-3 hover:text-blue-400 transition">
+              <span className="text-lg font-semibold text-white/90">JEBAZ RAJA</span>
+            </li>
+            <li className="flex items-center space-x-3 hover:text-blue-400 transition">
+              <span className="text-lg font-mono text-white/90 break-all">GSTIN:33CMEPJOO24R1Z3</span>
+            </li>
+
+            <li className="flex items-start space-x-3 hover:text-blue-400 transition">
+              <FaMapMarkerAlt className="w-5 h-5 font-bold mt-1 text-white flex-shrink-0" />
+              <a
+                href="https://www.google.com/maps/place/38,+Jailsing+nagar,+Tirunelveli,+Tamilnadu,+India"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline text-white/90"
+              >
                 38, Jailsing nagar, Tirunelveli,
                 <br />
                 Tamilnadu, India
-              </span>
+              </a>
             </li>
+          
             <li className="flex items-center space-x-3 hover:text-blue-400 transition">
               <Phone className="w-5 h-5 text-white flex-shrink-0" />
               <a href="tel:+918807568848" className="hover:underline">
@@ -126,22 +146,27 @@ export default function Footer() {
                 admin@rebeccaexim.co.in
               </a>
             </li>
+
+
           </ul>
 
           {/* Social Media Icons */}
-          <div className="flex space-x-4 pt-2">
-            <a href="#" className="text-white hover:text-blue-400 transition">
-              <FaFacebookF className="w-8 h-8" />
-            </a>
-            <a href="#" className="text-white hover:text-pink-500 transition">
-              <FaInstagram className="w-8 h-8" />
-            </a>
-            <a href="#" className="text-white hover:text-blue-300 transition">
-              <FaTwitter className="w-8 h-8" />
-            </a>
-            <a href="#" className="text-white hover:text-blue-600 transition">
-              <FaLinkedinIn className="w-8 h-8" />
-            </a>
+          <div className="flex flex-col items-center pt-2">
+            <span className="text-xs font-bold text-white uppercase tracking-widest mb-2">Follow Us</span>
+            <div className="flex space-x-4">
+              <a href="#" className="bg-gradient-to-tr from-pink-500 to-yellow-400 rounded-full p-2 text-white hover:from-pink-700 hover:to-yellow-500 transition">
+                <FaInstagram className="w-6 h-6" />
+              </a>
+              <a href="#" className="bg-blue-400 rounded-full p-2 text-white hover:bg-blue-600 transition">
+                <FaTwitter className="w-6 h-6" />
+              </a>
+              <a href="#" className="bg-blue-800 rounded-full p-2 text-white hover:bg-blue-900 transition">
+                <FaLinkedinIn className="w-6 h-6" />
+              </a>
+              <a href="https://www.google.com/maps/place/38,+Jailsing+nagar,+Tirunelveli,+Tamilnadu,+India" target="_blank" rel="noopener noreferrer" className="bg-green-800 rounded-full p-2 text-white hover:bg-blue-800 transition">
+                <FaMapMarkerAlt className="w-6 h-6" />
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -163,6 +188,8 @@ export default function Footer() {
             >
               HIG Automation
             </a>
+            <br />
+           
           </span>
         </div>
       </div>

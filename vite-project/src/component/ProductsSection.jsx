@@ -40,7 +40,7 @@ const ProductsSection = () => {
 
   return (
     <section className="w-full bg-white py-12 px-2 md:px-4">
-      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-black underline mb-8 md:mb-12 font-sans">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-black underline mb-6 md:mb-10">
         Our Primary Products
       </h2>
 
@@ -63,9 +63,9 @@ const ProductsSection = () => {
           {products.map((product, index) => (
             <div
               key={index}
-              className="min-w-[70vw] max-w-[80vw] sm:min-w-[220px] sm:max-w-[250px] md:min-w-[250px] md:max-w-[270px] bg-[#B12929] rounded-xl p-3 md:p-4 flex-shrink-0 flex flex-col items-center shadow-md"
+              className="min-w-[55vw] max-w-[65vw] sm:min-w-[180px] sm:max-w-[210px] md:min-w-[250px] md:max-w-[270px] bg-[#B12929] rounded-xl p-2 sm:p-3 md:p-4 flex-shrink-0 flex flex-col items-center shadow-md"
             >
-              <div className="w-[110px] h-[110px] sm:w-[150px] sm:h-[150px] md:w-[170px] md:h-[170px] rounded-full bg-[#D9D9D9] overflow-hidden flex items-center justify-center mb-3 md:mb-4">
+              <div className="w-[70px] h-[70px] sm:w-[110px] sm:h-[110px] md:w-[170px] md:h-[170px] rounded-full bg-[#D9D9D9] overflow-hidden flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
                 <img
                   src={product.image}
                   alt={product.name}
@@ -74,7 +74,7 @@ const ProductsSection = () => {
                   loading="lazy"
                 />
               </div>
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-center text-white">
+              <h3 className="text-sm sm:text-base md:text-xl font-semibold text-center text-white">
                 {product.name}
               </h3>
             </div>

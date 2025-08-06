@@ -19,7 +19,7 @@ const LandingPage = () => {
       <ProductsSection />
       
       {/* About Section */}
-      <AboutSection />
+      <AboutSection showVisionMission={false} />
       
       {/* Statistics Section */}
       <StatsSection />

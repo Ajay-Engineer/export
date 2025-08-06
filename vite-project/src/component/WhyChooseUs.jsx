@@ -27,8 +27,7 @@ const WhyChooseUs = () => {
   return (
     <section className="w-full bg-white py-10 sm:py-14 px-4 sm:px-6 lg:px-10">
       <h2
-        className="text-2xl sm:text-3xl font-extrabold text-black text-center mb-10"
-        style={{ fontFamily: 'Instrument Sans, sans-serif' }}
+        className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-black underline mb-6 md:mb-10"
       >
         Why Choose Us
       </h2>

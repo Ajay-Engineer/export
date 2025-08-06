@@ -19,15 +19,15 @@ const RegionalSection = () => {
   return (
     <section className="w-full bg-white py-12 px-4 sm:px-6 lg:px-8">
       {/* Title */}
-      <h2 className="text-3xl sm:text-4xl font-bold text-center text-black underline mb-10">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-black underline mb-6 md:mb-10">
         Regional Segregation
       </h2>
 
       {/* Region Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 max-w-6xl mx-auto">
         {regions.map((region, index) => (
           <div key={index} className="flex flex-col items-center text-center">
-            <div className="relative w-full max-w-[320px] aspect-[1/1] rounded-lg overflow-hidden shadow-md">
+            <div className="relative w-[65vw] max-w-[220px] sm:w-[180px] sm:max-w-[220px] md:w-full md:max-w-[320px] aspect-[1/1] rounded-lg overflow-hidden shadow-md">
               <img
                 src={region.image}
                 alt={region.title}
@@ -41,7 +41,7 @@ const RegionalSection = () => {
                 />
               )}
             </div>
-            <h3 className="mt-4 text-xl sm:text-2xl font-bold text-black">
+            <h3 className="mt-2 sm:mt-3 md:mt-4 text-base sm:text-lg md:text-2xl font-bold text-black">
               {region.title}
             </h3>
           </div>

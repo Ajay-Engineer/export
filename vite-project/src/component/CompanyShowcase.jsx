@@ -20,9 +20,9 @@ const CompanyShowcase = () => {
   };
 
   return (
-    <section className="w-full bg-white py-12 px-4 sm:px-6 lg:px-8">
+    <section className="w-full bg-blue-50 py-12 px-4 sm:px-6 lg:px-8">
       {/* 1. Responsive Heading Text Size */}
-      <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-10">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-black underline mb-6 md:mb-10">
         Company Showcase
       </h2>
 
