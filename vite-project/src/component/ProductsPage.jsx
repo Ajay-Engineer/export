@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { X, ArrowLeft } from "lucide-react";
 import {
   Leaf,
   CakeSlice,
@@ -10,6 +11,8 @@ import {
 } from "lucide-react";
 
 export default function ProductsPage() {
+  const navigate = useNavigate();
+
   const products = [
     {
       name: "Herbal Extract Products",
@@ -56,25 +59,45 @@ export default function ProductsPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      {/* Top quick navigation bar */}
-      <h1 className="text-4xl font-bold text-center mb-12">Our Products</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.map((product) => (
-          <Link
-            key={product.name}
-            to={product.path}
-            className="group block p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-          >
-            <div className="flex items-center justify-center mb-4">
-              {product.icon}
-            </div>
-            <h2 className="text-xl font-semibold text-center mb-2 group-hover:text-red-600 transition-colors">
-              {product.name}
-            </h2>
-            <p className="text-gray-600 text-center">{product.description}</p>
-          </Link>
-        ))}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Navigation Header - Flex row with left, center, right */}
+        <div className="bg-white shadow-sm rounded-lg p-4 mb-8 sticky top-0 z-10">
+          <div className="flex items-center justify-between">
+            {/* Left: Back to Home */}
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors font-medium bg-red-50 px-4 py-2 rounded-lg"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            {/* Center: Our Products */}
+            <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-center flex-1 text-gray-800 px-2">
+              Our Products
+            </h1>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map((product) => (
+              <Link
+                key={product.name}
+                to={product.path}
+                className="group block p-6 bg-gray-50 rounded-lg shadow-lg hover:shadow-xl transition-shadow border border-gray-100"
+              >
+                <div className="flex items-center justify-center mb-4">
+                  {product.icon}
+                </div>
+                <h2 className="text-xl font-semibold text-center mb-2 group-hover:text-red-600 transition-colors text-gray-800">
+                  {product.name}
+                </h2>
+                <p className="text-gray-600 text-center">{product.description}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

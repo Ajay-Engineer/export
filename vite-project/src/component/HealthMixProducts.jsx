@@ -71,6 +71,7 @@ const HealthMixProducts = () => {
     <div className="bg-white">
       <div className="relative h-64 md:h-80 bg-cover bg-center flex items-center justify-center" style={{ backgroundImage: "url('/images/healthmix-bg.jpg')" }}>
         <div className="absolute inset-0 bg-black/60" />
+        
         <h1 className="relative z-10 text-3xl md:text-5xl font-bold uppercase text-white text-center px-4">Health Mix Products</h1>
       </div>
       <div className="max-w-7xl mx-auto px-4 py-14">

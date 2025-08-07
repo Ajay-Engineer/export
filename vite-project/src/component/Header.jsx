@@ -103,6 +103,15 @@ export default function Header() {
                       </span>
                     </div>
                     <ul className="grid grid-cols-1 gap-2 text-sm text-gray-700">
+                      <li>
+                        <Link
+                          to="/products"
+                          className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-red-100 hover:text-red-700 transition font-semibold border-b border-gray-200 mb-1"
+                        >
+                          <Package className="w-4 h-4 text-red-600" />
+                          All Products
+                        </Link>
+                      </li>
                       {productCategories.map((product) => (
                         <li key={product.name}>
                           <Link
@@ -162,6 +171,18 @@ export default function Header() {
                 </div>
                 {isMobileProductOpen && (
                   <ul className="pl-4 space-y-1 mt-1">
+                    <li>
+                      <Link
+                        to="/products"
+                        className="block text-base text-black hover:text-red-600 font-semibold border-b border-gray-200 mb-1"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsMobileProductOpen(false);
+                        }}
+                      >
+                        All Products
+                      </Link>
+                    </li>
                     {productCategories.map((product) => (
                       <li key={product.name}>
                         <Link

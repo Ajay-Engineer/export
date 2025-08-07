@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import logo from "../assets/RebeccaExim_Logo1.jpg"
+import logo from "../assets/Rebbcaeximfooter.png"
 
 const AboutSection = ({ showVisionMission = true }) => {
   const [showMore, setShowMore] = useState(false);
@@ -8,22 +8,36 @@ const AboutSection = ({ showVisionMission = true }) => {
     <section className="w-full bg-[#f4f4f4] py-10 md:py-10 px-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <h2 className="text-4xl md:text-5xl font-bold text-center text-[#1f2937] underline mb-12">
+        <h2 className="text-4xl md:text-5xl font-bold text-center text-[#1f2937] underline mb-4">
           About Us
         </h2>
+        <p className="text-xl text-center text-[#b12626] font-semibold mb-10">
+          Welcome to Rebecca Exim – Where quality meets global demand.
+        </p>
         <div className="grid md:grid-cols-2 gap-10 items-center">
           {/* Left - Core Info */}
           <div>
             <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-              Delivering India's Excellence to the World
+              Over a Decade of Trusted Excellence
             </h3>
             <p className="text-gray-700 text-lg leading-relaxed">
-              Rebecca Exim is an export-focused enterprise dedicated to bringing India's finest natural and handcrafted products to international markets. Established in 2025, we specialize in <span className="font-semibold text-gray-900">high-grade spices, eco-friendly coir products, and heritage textiles</span> with a commitment to quality and sustainability.
+              With over 10 years of experience in the domestic market, Rebecca Exim has evolved into a globally focused export company committed to excellence, trust, and customer satisfaction. Founded by <span className="font-semibold text-gray-900">Mr. Jebaz Raja</span>, our journey began with a strong foundation in local trade and a deep understanding of sourcing quality products directly from manufacturers and farmers.
             </p>
             <p className="text-gray-700 text-lg leading-relaxed mt-4">
-              We serve a global clientele of importers, distributors, and enterprise buyers who value authenticity, ethical sourcing, and on-time delivery backed by compliance and trust.
+              Today, we proudly extend our reach across <span className="font-semibold text-gray-900">Europe, the Middle East, and Southeast Asia</span>, delivering value through ethical practices, strict quality control, and dependable service. As a recognized member of the <span className="font-semibold text-gray-900">Federation of Indian Export Organisations (FIEO)</span>, we operate with transparency and dedication in every transaction.
             </p>
-
+            <div className="mt-6 mb-2">
+              <h4 className="text-xl font-bold text-gray-800 mb-2">Our Values</h4>
+              <ul className="space-y-2 text-lg">
+                <li className="flex items-center gap-2"><span className="text-green-600 text-xl">✔️</span> <span>Quality Assurance</span></li>
+                <li className="flex items-center gap-2"><span className="text-green-600 text-xl">✔️</span> <span>Direct Sourcing</span></li>
+                <li className="flex items-center gap-2"><span className="text-green-600 text-xl">✔️</span> <span>Customer-Centric Service</span></li>
+                <li className="flex items-center gap-2"><span className="text-green-600 text-xl">✔️</span> <span>On-Time Delivery</span></li>
+              </ul>
+            </div>
+            <p className="text-gray-700 text-lg leading-relaxed mt-4">
+              At Rebecca Exim, we believe in building long-term partnerships by consistently meeting international expectations. We are dedicated to ethical business, sustainable sourcing, and exceeding the standards of our global clients.
+            </p>
             {/* Learn More Toggle */}
             <button
               onClick={() => setShowMore(!showMore)}
@@ -31,7 +45,6 @@ const AboutSection = ({ showVisionMission = true }) => {
             >
               {showMore ? 'Show Less' : 'Learn More'}
             </button>
-
             {/* Learn More Content */}
             {showMore && (
               <div className="mt-6 space-y-6 text-gray-700">
@@ -41,28 +54,24 @@ const AboutSection = ({ showVisionMission = true }) => {
                     Over the years, we've built strong relationships with partners across North America, Europe, Asia, and the Middle East. Our legacy lies in our ability to consistently deliver value and integrity, regardless of scale or region.
                   </p>
                 </div>
-
                 <div>
                   <h4 className="text-xl font-bold text-gray-800 mb-1">Certifications & Compliance</h4>
                   <p>
                     We adhere to international standards including ISO, HACCP, APEDA, and FSSAI. Each product batch undergoes rigorous testing and documentation to meet the expectations of world-class buyers.
                   </p>
                 </div>
-
                 <div>
                   <h4 className="text-xl font-bold text-gray-800 mb-1">Packaging & Protection</h4>
                   <p>
                     Our packaging solutions are engineered to maintain product integrity from source to shelf. Options range from bulk to retail-ready formats, all optimized for freshness, safety, and presentation.
                   </p>
                 </div>
-
                 <div>
                   <h4 className="text-xl font-bold text-gray-800 mb-1">Our Promise</h4>
                   <p>
                     At Rebecca Exim, we believe in long-term relationships. Our promise is built on transparency, customer service, and consistent performance—every shipment, every time.
                   </p>
                 </div>
-
                 <div>
                   <h4 className="text-xl font-bold text-gray-800 mb-1">Competitive Advantage</h4>
                   <p>
@@ -72,17 +81,13 @@ const AboutSection = ({ showVisionMission = true }) => {
               </div>
             )}
           </div>
-
           {/* Right - Image */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex justify-center items-center">
-              <img
+          <div className="bg-white rounded-lg shadow-lg">
+            <img
                 src={logo}
                 alt="Rebecca Exim Global Exports"
-                className="rounded-xl object-cover w-full max-h-[400px]"
+                className="rounded-xl w-full max-h-[400px] object-contain"
               />
-            </div>
-            
             {/* Desktop: Vision/Mission/Trust cards below logo - shown when Learn More is clicked */}
             {showMore && showVisionMission && (
               <div className="hidden md:block mt-6 space-y-4 w-full transition-all duration-500 ease-in-out">
@@ -102,7 +107,6 @@ const AboutSection = ({ showVisionMission = true }) => {
             )}
           </div>
         </div>
-
         {/* Vision/Mission/Trust cards below entire section - shown by default */}
         {showVisionMission && (
           <div className={`transition-all duration-500 ease-in-out ${showMore ? 'md:opacity-0 md:scale-95 md:pointer-events-none opacity-100 scale-100 mt-6' : 'opacity-100 scale-100 mt-4'}`}>

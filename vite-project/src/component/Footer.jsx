@@ -18,6 +18,7 @@ import {
   FaLinkedinIn,
 } from "react-icons/fa";
 import Footerlogo from "../assets/Rebbcaeximfooter.png";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
@@ -26,12 +27,9 @@ export default function Footer() {
       <div className="max-w-screen-xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-y-12 md:gap-x-12">
         {/* Logo + Description */}
         <div className="space-y-4 mt-5">
-          <div className="flex items-end space-x-3">
+          <div className="flex justify-center space-x-3">
             <img
-
               src={Footerlogo}
-
-
               alt="Logo"
               className="w-52 h-auto shadow-sm object-contain"
             />
@@ -46,10 +44,18 @@ export default function Footer() {
         <div className="space-y-4 md:ml-10">
           <h3 className="text-xl sm:text-2xl font-bold">Quick Links</h3>
           <ul className="space-y-2 text-lg font-semibold text-white/90">
-            <li className="hover:text-blue-400 transition">・Home</li>
-            <li className="hover:text-blue-400 transition">・Brand</li>
+            <li>
+              <Link to="/" className="hover:text-blue-400 transition cursor-pointer">・Home</Link>
+            </li>
+            <li>
+              <Link to="/products" className="hover:text-blue-400 transition cursor-pointer">・Products</Link>
+            </li>
+            <li>
+              <Link to="/brand" className="hover:text-blue-400 transition cursor-pointer">・Brand</Link>
+            </li>
             <li className="hover:text-blue-400 transition">・Payment Terms</li>
             <li className="hover:text-blue-400 transition">・Contact Us</li>
+            <li className="hover:text-blue-400 transition">・About Us</li>
             <li className="hover:text-blue-400 transition">・Privacy Policy</li>
             <li className="hover:text-blue-400 transition">
               ・Terms &amp; Conditions
@@ -129,7 +135,7 @@ export default function Footer() {
                 Tamilnadu, India
               </a>
             </li>
-          
+
             <li className="flex items-center space-x-3 hover:text-blue-400 transition">
               <Phone className="w-5 h-5 text-white flex-shrink-0" />
               <a href="tel:+918807568848" className="hover:underline">
@@ -188,7 +194,7 @@ export default function Footer() {
               HIG Automation
             </a>
             <br />
-           
+
           </span>
         </div>
       </div>

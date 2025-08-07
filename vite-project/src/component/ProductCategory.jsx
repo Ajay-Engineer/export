@@ -1,4 +1,5 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { X, ArrowLeft } from "lucide-react";
 import {
   Leaf,
   CakeSlice,
@@ -11,6 +12,7 @@ import {
 
 export default function ProductCategory() {
   const { category } = useParams();
+  const navigate = useNavigate();
 
   const productCategories = {
     "herbal": {
@@ -83,36 +85,86 @@ export default function ProductCategory() {
 
   if (!categoryData) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-center text-red-600">
-          Product Category Not Found
-        </h1>
+      <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Navigation Header - Fixed Position */}
+          <div className="bg-white shadow-sm rounded-lg p-4 mb-8 sticky top-0 z-10">
+            <div className="flex justify-between items-center">
+              <Link
+                to="/"
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors font-medium bg-red-50 px-4 py-2 rounded-lg"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Home</span>
+              </Link>
+              <button
+                onClick={() => navigate(-1)}
+                className="p-3 hover:bg-gray-100 rounded-full transition-colors bg-white border border-gray-200"
+                aria-label="Close"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <h1 className="text-4xl font-bold text-red-600 mb-4">
+              Product Category Not Found
+            </h1>
+            <p className="text-gray-600">The requested category could not be found.</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      <div className="text-center mb-12">
-        <div className="flex justify-center mb-4">{categoryData.icon}</div>
-        <h1 className="text-4xl font-bold mb-4">{categoryData.name}</h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          {categoryData.description}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {categoryData.products.map((product) => (
-          <div
-            key={product}
-            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <h3 className="text-xl font-semibold mb-2">{product}</h3>
-            <button className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors w-full">
-              Get Quote
+    <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Navigation Header - Fixed Position */}
+        <div className="bg-white shadow-sm rounded-lg p-4 mb-8 sticky top-0 z-10">
+          <div className="flex justify-between items-center">
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors font-medium bg-red-50 px-4 py-2 rounded-lg"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-2xl font-bold text-red-600">Back to Home</span>
+            </Link>
+            <button
+              onClick={() => navigate(-1)}
+              className="p-3 hover:bg-gray-100 rounded-full transition-colors bg-white border border-gray-200"
+              aria-label="Close"
+            >
+              <X className="w-6 h-6 text-gray-600" />
             </button>
           </div>
-        ))}
+        </div>
+
+        {/* Main Content */}
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center mb-12">
+            <div className="flex justify-center mb-4">{categoryData.icon}</div>
+            <h1 className="text-4xl font-bold mb-4 text-gray-800">{categoryData.name}</h1>
+            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+              {categoryData.description}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {categoryData.products.map((product) => (
+              <div
+                key={product}
+                className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100"
+              >
+                <h3 className="text-xl font-semibold mb-4 text-gray-800">{product}</h3>
+                <button className="mt-4 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors w-full font-medium">
+                  Get Quote
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

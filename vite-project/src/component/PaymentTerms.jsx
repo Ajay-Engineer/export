@@ -110,7 +110,7 @@ export default function PaymentTerms() {
         </div>
 
         {/* Incoterms Grid */}
-        <h2 className="text-2xl font-bold text-green-700 mb-10">Incoterms</h2>
+        <h2 className="text-5xl font-bold text-green-700 mb-10">Incoterms</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-4 md:px-20">
           {incoterms.map((item, index) => (
             <div
