@@ -33,7 +33,11 @@ import ProductCategory from "./component/ProductCategory";
 import ProductSubcategory from "./component/ProductSubcategory";
 import ProductDetailPage from "./component/ProductDetailPage";
 import ProductCreateForm from "./component/ProductCreateForm.jsx";
+<<<<<<< HEAD
 import Brand from "./component/Brand";
+=======
+
+>>>>>>> 79fe06c1a2f61d37b8826e4a140823107b70873b
 
 
 function App() {
@@ -48,7 +52,10 @@ function App() {
             <Route path="/about" element={<AboutSection />} />
             <Route path="/contact" element={<ContactForm />} />
             <Route path="/Payment" element={<PaymentTerms />} />
+<<<<<<< HEAD
             <Route path="/brand" element={<Brand />} />
+=======
+>>>>>>> 79fe06c1a2f61d37b8826e4a140823107b70873b
             
             {/* Product Routes */}
             <Route path="/products" element={<ProductsPage />} />

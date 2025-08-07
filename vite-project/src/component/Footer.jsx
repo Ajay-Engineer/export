@@ -17,7 +17,11 @@ import {
   FaTwitter,
   FaLinkedinIn,
 } from "react-icons/fa";
+<<<<<<< HEAD
 import Footerlogo from "../assets/Rebbcaeximfooter.png";
+=======
+
+>>>>>>> 79fe06c1a2f61d37b8826e4a140823107b70873b
 
 export default function Footer() {
   return (
@@ -28,11 +32,22 @@ export default function Footer() {
         <div className="space-y-4 mt-5">
           <div className="flex items-end space-x-3">
             <img
+<<<<<<< HEAD
               src={Footerlogo}
+=======
+              src={Logo}
+>>>>>>> 79fe06c1a2f61d37b8826e4a140823107b70873b
               alt="Logo"
               className="w-52 h-auto shadow-sm object-contain"
             />
           </div>
+<<<<<<< HEAD
+=======
+          {/* Slogan */}
+          <div className="flex flex-col items-center mt-2">
+            <span className="text-base sm:text-lg font-bold text-yellow-500 text-center">WHERE QUALITY MEETS GLOBAL DEMAND</span>
+          </div>
+>>>>>>> 79fe06c1a2f61d37b8826e4a140823107b70873b
           <p className="text-base sm:text-lg font-semibold leading-relaxed tracking-wide text-white/90">
             Rebecca Exim delivers premium organic products globally with quality
             assurance, eco-friendly practices and a commitment to sustainable
