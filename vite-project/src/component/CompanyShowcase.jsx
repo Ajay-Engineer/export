@@ -32,16 +32,16 @@ const CompanyShowcase = () => {
         <div className="w-full aspect-[3/2] md:aspect-video lg:aspect-[4/3] overflow-hidden rounded-lg shadow-md">
           <img
             src={`${builderIoBaseUrl}${leftImageSrcId}?width=${leftImageWidths[0]}`}
-            // 3. Responsive Image Source Loading (srcset/sizes)
             srcSet={generateSrcset(leftImageSrcId, leftImageWidths)}
-            sizes="(max-width: 1023px) 100vw, 50vw" // This is key for image responsiveness
+            sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
             alt="Company overview"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover md:object-cover lg:object-contain"
             style={{ objectPosition: "center center" }}
             loading="lazy"
             decoding="async"
           />
         </div>
+
 
         {/* Right stacked images Container */}
         <div className="w-full flex flex-col gap-6">
@@ -56,7 +56,7 @@ const CompanyShowcase = () => {
                 srcSet={generateSrcset(srcId, rightImageWidths)}
                 sizes="(max-width: 1023px) 100vw, 50vw" // This is key for image responsiveness
                 alt={`Company image ${i + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-fit"
                 style={{ objectPosition: "center center" }}
                 loading="lazy"
                 decoding="async"
