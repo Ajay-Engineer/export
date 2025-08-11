@@ -60,6 +60,15 @@ export default function Footer() {
             <li className="hover:text-blue-400 transition">
               ・Terms &amp; Conditions
             </li>
+            <li>
+              <Link
+                to="/faq"
+                className="hover:text-blue-400 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-red-800 rounded px-1"
+                aria-label="Navigate to FAQ page"
+              >
+                ・FAQ
+              </Link>
+            </li>
           </ul>
         </div>
         {/* Our Products with Icons */}

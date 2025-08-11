@@ -34,6 +34,7 @@ import ProductSubcategory from "./component/ProductSubcategory";
 import ProductDetailPage from "./component/ProductDetailPage";
 import ProductCreateForm from "./component/ProductCreateForm.jsx";
 import Brand from "./component/Brand";
+import FAQ from "./component/FAQ";
 
 
 function App() {
@@ -71,6 +72,7 @@ function App() {
             <Route path="/why-choose-us" element={<WhyChooseUs />} />
             <Route path="/testimonials" element={<TestimonialsSection />} />
             <Route path="/stats" element={<StatsSection />} />
+            <Route path="/faq" element={<FAQ />} />
 
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
