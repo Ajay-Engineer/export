@@ -1,45 +1,8 @@
-
-
+// Remove the duplicate default export and keep only one default export
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import ProductCard from "./Productclass";
-import ProductDetailPage from "./ProductDetailPage";
+import ProductList from "../components/ProductList";
 
-const products = [
-  {
-    slug: "premium-black-tea",
-    title: "Premium Black Tea",
-    description: "Fine quality black tea from selected estates.",
-    images: ["/images/premium-black-tea.png"],
-    videoUrl: "https://www.youtube.com/embed/blacktea",
-    datasheetUrl: "/datasheets/premium-black-tea.pdf",
-    benefits: [
-      { title: "Rich Flavor", description: "Bold and aromatic." },
-      { title: "Antioxidants", description: "Supports wellness." },
-    ],
-    specifications: {
-      Type: "Loose leaf",
-      Origin: "Assam, India",
-      Color: "Black",
-      "Shelf Life": "18 months",
-      MOQ: "100kg",
-    },
-    packaging: [
-      { title: "Pouch", content: "100g, 250g, 1kg" },
-    ],
-    certifications: [
-      { src: "/certs/organic.png", alt: "Organic" },
-    ],
-    faqs: [
-      { q: "Is it organic?", a: "Yes, certified." },
-    ],
-    related: [
-      { title: "Green Tea", image: "/images/green-tea.png", link: "/products/tea/green" },
-    ],
-  },
-  // ...add more dummy tea products here with all fields...
-];
-
+// If you want the detailed version, rename the function and export it as default
 const TeaProducts = () => {
   const [selected, setSelected] = useState(null);
 

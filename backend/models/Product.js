@@ -3,21 +3,36 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
+    required: [true, 'Title is required'],
+    trim: true
+  },
+  slug: {
+    type: String,
+    required: [true, 'Slug is required'],
+    unique: true,
+    trim: true,
+    lowercase: true
+  },
+  category: {
+    type: String,
+    required: [true, 'Category is required'],
+    enum: ['herbal', 'palm-jaggery', 'coir', 'tea', 'health-mix', 'handicraft', 'egg']
+  },
+  shortDescription: {
+    type: String,
+    required: [true, 'Short description is required'],
     trim: true
   },
   description: {
     type: String,
-    required: true,
+    required: [true, 'Description is required'],
     trim: true
   },
-  category: {
+  videoUrl: {
     type: String,
-    required: true,
-    trim: true,
-    enum: ['herbal', 'palm-jaggery', 'coir', 'tea', 'health-mix', 'handicraft', 'egg']
+    trim: true
   },
-  subcategory: {
+  datasheetUrl: {
     type: String,
     trim: true
   },
@@ -25,34 +40,85 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true
   }],
-  price: {
-    type: Number,
-    required: true
-  },
-  features: [{
-    type: String,
-    trim: true
+  benefits: [{
+    title: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String,
+      required: true
+    }
   }],
   specifications: {
-    type: Map,
-    of: String
+    'Botanical Source': String,
+    'Form': String,
+    'Color': String,
+    'Moisture': String,
+    'Ash Content': String,
+    'Shelf Life': String,
+    'pH': String,
+    'MOQ': String
   },
-  stock: {
-    type: Number,
-    default: 0
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true
-  }
+  packaging: [{
+    title: {
+      type: String,
+      required: true
+    },
+    content: {
+      type: String,
+      required: true
+    }
+  }],
+  certifications: [{
+    src: {
+      type: String,
+      required: true
+    },
+    alt: {
+      type: String,
+      required: true
+    }
+  }],
+  faqs: [{
+    q: {
+      type: String,
+      required: true
+    },
+    a: {
+      type: String,
+      required: true
+    }
+  }],
+  related: [{
+    title: {
+      type: String,
+      required: true
+    },
+    image: {
+      type: String,
+      required: true
+    },
+    link: {
+      type: String,
+      required: true
+    }
+  }]
 }, {
   timestamps: true
 });
 
-// Create indexes for better query performance
-productSchema.index({ category: 1 });
-productSchema.index({ slug: 1 }, { unique: true });
-productSchema.index({ title: 'text', description: 'text' });
+// Create slug from title before saving
+productSchema.pre('save', function(next) {
+  if (this.isModified('title')) {
+    this.slug = this.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+  next();
+});
 
-module.exports = mongoose.model('Product', productSchema);
+const Product = mongoose.model('Product', productSchema);
+
+module.exports = Product;

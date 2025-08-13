@@ -43,7 +43,42 @@ const asyncHandler = (fn) => (req, res, next) => {
 
 // Create a new product
 router.post('/', upload.array('images', 5), asyncHandler(async (req, res) => {
-  const { title, description, category, subcategory, price, features, specifications, stock } = req.body;
+  console.log('Received request body:', req.body);
+  
+  // Extract all fields from request body
+  const { 
+    title,
+    description,
+    shortDescription,
+    category,
+    subcategory,
+    price,
+    features,
+    specifications,
+    stock
+  } = req.body;
+
+  // Log received data
+  console.log('Received fields:', {
+    title,
+    description,
+    shortDescription,
+    category
+  });
+
+  // Validate required fields
+  const requiredFields = ['title', 'category', 'shortDescription', 'description'];
+  const missingFields = requiredFields.filter(field => !req.body[field]);
+  
+  if (missingFields.length > 0) {
+    return res.status(400).json({ 
+      error: `Missing required fields: ${missingFields.join(', ')}`,
+      receivedFields: req.body
+    });
+  }
+
+  // Generate slug from title
+  const generatedSlug = slugify(title, { lower: true, strict: true });
 
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'At least one image is required' });
@@ -65,18 +100,66 @@ router.post('/', upload.array('images', 5), asyncHandler(async (req, res) => {
   // Save image paths
   const imagePaths = req.files.map(file => `/upload/products/${file.filename}`);
 
-  const product = new Product({
-    title,
-    description,
-    category,
-    subcategory,
-    price: Number(price),
-    features: features ? JSON.parse(features) : [],
-    specifications: specs,
-    stock: Number(stock),
-    images: imagePaths,
-    slug
-  });
+  // Parse JSON strings for arrays and objects
+  let parsedBenefits = [];
+  let parsedPackaging = [];
+  let parsedCertifications = [];
+  let parsedFaqs = [];
+  let parsedRelated = [];
+
+  try {
+    if (req.body.benefits) parsedBenefits = JSON.parse(req.body.benefits);
+    if (req.body.packaging) parsedPackaging = JSON.parse(req.body.packaging);
+    if (req.body.certifications) parsedCertifications = JSON.parse(req.body.certifications);
+    if (req.body.faqs) parsedFaqs = JSON.parse(req.body.faqs);
+    if (req.body.related) parsedRelated = JSON.parse(req.body.related);
+  } catch (error) {
+    console.error('Error parsing JSON fields:', error);
+  }
+
+  try {
+    console.log('Creating product with data:', {
+      title,
+      slug: generatedSlug,
+      description,
+      shortDescription,
+      category,
+      specifications: specs,
+      benefits: parsedBenefits,
+      packaging: parsedPackaging,
+      certifications: parsedCertifications,
+      faqs: parsedFaqs,
+      related: parsedRelated
+    });
+
+    const product = new Product({
+      title,
+      slug: generatedSlug,
+      description,
+      shortDescription,
+      category,
+      images: imagePaths,
+      specifications: specs,
+      benefits: parsedBenefits,
+      packaging: parsedPackaging,
+      certifications: parsedCertifications,
+      faqs: parsedFaqs,
+      related: parsedRelated,
+      videoUrl: req.body.videoUrl || '',
+      datasheetUrl: req.body.datasheetUrl || ''
+    });
+
+    await product.validate();
+    await product.save();
+    res.status(201).json(product);
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({
+      error: 'Error creating product',
+      details: error.message,
+      validationErrors: error.errors
+    });
+  }
 
   await product.save();
   res.status(201).json(product);
