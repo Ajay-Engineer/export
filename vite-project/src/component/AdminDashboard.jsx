@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-
-
 import { Pencil, Trash2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import AdminBottomNav from './AdminBottomNav';
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -36,9 +35,11 @@ const AdminDashboard = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <button onClick={() => navigate("/admin/add")} className="bg-red-600 hover:bg-red-700">
-          + Add Product
-        </button>
+        <div className="space-x-2">
+          <button onClick={() => navigate("/admin/products/add")} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white">+ Add Product</button>
+          <button onClick={() => navigate("/admin/certificates")} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">Manage Certificates</button>
+          <button onClick={() => navigate("/admin/testimonials")} className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white">Manage Testimonials</button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -77,6 +78,8 @@ const AdminDashboard = () => {
           </tbody>
         </table>
       </div>
+      <div className="h-20"></div> {/* Add spacing for bottom nav */}
+      <AdminBottomNav />
     </div>
   );
 };

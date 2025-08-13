@@ -128,24 +128,6 @@ export default function Footer() {
               <span className="text-lg font-semibold text-white/90">JEBAZ RAJA</span>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400 transition">
-              <span className="text-lg font-mono text-white/90 break-all">GSTIN:33CMEPJOO24R1Z3</span>
-            </li>
-
-            <li className="flex items-start space-x-3 hover:text-blue-400 transition">
-              <FaMapMarkerAlt className="w-5 h-5 font-bold mt-1 text-white flex-shrink-0" />
-              <a
-                href="https://www.google.com/maps/place/38,+Jailsing+nagar,+Tirunelveli,+Tamilnadu,+India"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline text-white/90"
-              >
-                38, Jailsing nagar, Tirunelveli,
-                <br />
-                Tamilnadu, India
-              </a>
-            </li>
-
-            <li className="flex items-center space-x-3 hover:text-blue-400 transition">
               <Phone className="w-5 h-5 text-white flex-shrink-0" />
               <a href="tel:+918807568848" className="hover:underline">
                 +91 8807568848
@@ -162,6 +144,19 @@ export default function Footer() {
             </li>
 
 
+            <li className="flex items-start space-x-3 hover:text-blue-400 transition">
+              <FaMapMarkerAlt className="w-5 h-5 font-bold mt-1 text-white flex-shrink-0" />
+              <a
+                href="https://www.google.com/maps/place/38,+Jailsing+nagar,+Tirunelveli,+Tamilnadu,+India"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline text-white/90"
+              >
+                38, Jailsing nagar, Tirunelveli,
+                <br />
+                Tamilnadu, India
+              </a>
+            </li>
           </ul>
 
           {/* Social Media Icons */}

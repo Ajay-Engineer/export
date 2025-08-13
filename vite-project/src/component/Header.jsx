@@ -76,7 +76,7 @@ export default function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-end space-x-2 group">
           <img src={Logo} className="w-16 h-auto max-w-full rounded-t-xl group-hover:opacity-80 transition" alt="Logo" />
-          <span className="text-xl font-bold text-black whitespace-nowrap">
+          <span className="text-xl font-serif text-black whitespace-nowrap">
             REBECCA EXIM
           </span>
         </Link>

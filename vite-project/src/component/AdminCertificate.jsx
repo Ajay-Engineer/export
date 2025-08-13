@@ -1,0 +1,218 @@
+import React, { useEffect, useState } from 'react';
+
+const API_URL = 'http://localhost:3001/api/certificates';
+
+import AdminBottomNav from './AdminBottomNav';
+
+const AdminCertificate = () => {
+  const [certificates, setCertificates] = useState([]);
+  const [form, setForm] = useState({ title: '', image: null });
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetchCertificates = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(API_URL, {
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format');
+      }
+      setCertificates(data);
+    } catch (error) {
+      console.error('Error fetching certificates:', error);
+      setCertificates([]);
+      alert('Failed to load certificates. Please try refreshing the page.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCertificates();
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: files ? files[0] : value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate form
+    if (!form.title.trim()) {
+      setError('Title is required');
+      return;
+    }
+
+    if (!editingId && !form.image) {
+      setError('Image is required for new certificates');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('title', form.title.trim());
+      if (form.image) {
+        // Validate file type
+        if (!form.image.type.startsWith('image/')) {
+          setError('Please select a valid image file');
+          return;
+        }
+        // Validate file size (5MB)
+        if (form.image.size > 5 * 1024 * 1024) {
+          setError('Image size must be less than 5MB');
+          return;
+        }
+        formData.append('image', form.image);
+      }
+      
+      let url = `${API_URL}/add`;
+      let method = 'POST';
+      if (editingId) {
+        url = `${API_URL}/edit/${editingId}`;
+        method = 'PUT';
+      }
+      
+      const response = await fetch(url, {
+        method,
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Failed to save certificate');
+      }
+      
+      setForm({ title: '', image: null });
+      setEditingId(null);
+      await fetchCertificates();
+    } catch (error) {
+      console.error('Error saving certificate:', error);
+      setError(error.message || 'Failed to save certificate. Please try again.');
+    }
+  };
+
+  const handleEdit = (cert) => {
+    setForm({ title: cert.title, description: cert.description, image: null });
+    setEditingId(cert._id);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/delete/${id}`, { 
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete certificate');
+      }
+      
+      fetchCertificates();
+    } catch (error) {
+      console.error('Error deleting certificate:', error);
+      alert('Failed to delete certificate. Please try again.');
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-3xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">Admin Certificate Management</h2>
+      <form onSubmit={handleSubmit} className="mb-6 space-y-4">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+        <div>
+          <input
+            type="text"
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Certificate Title"
+            className="border p-2 w-full rounded"
+            required
+          />
+        </div>
+        <div>
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            onChange={handleChange}
+            className="border p-2 w-full rounded"
+            required={!editingId}
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            Accepts JPG, PNG, GIF up to 5MB
+          </p>
+        </div>
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+          {editingId ? 'Update' : 'Add'} Certificate
+        </button>
+        {editingId && (
+          <button type="button" onClick={() => { setEditingId(null); setForm({ title: '', description: '', image: null }); }} className="ml-2 px-4 py-2 rounded bg-gray-400 text-white">Cancel</button>
+        )}
+      </form>
+      <div>
+        {loading ? (
+          <p>Loading certificates...</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {certificates.map((cert) => (
+              <div key={cert._id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                {cert.image && (
+                  <div className="aspect-w-3 aspect-h-2 mb-4">
+                    <img
+                      src={cert.image ? `http://localhost:3001${cert.image}` : 'https://via.placeholder.com/300?text=No+Image'}
+                      alt={cert.title}
+                      className="w-full h-48 object-contain rounded bg-gray-50"
+                      onError={(e) => {
+                        console.error('Image load error for:', cert.image);
+                        // Don't use via.placeholder.com as it seems to be unreachable
+                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';
+                      }}
+                    />
+                  </div>
+                )}
+                <h3 className="font-semibold text-lg mb-3 text-center">{cert.title}</h3>
+                <div className="flex justify-center space-x-2">
+                  <button
+                    onClick={() => handleEdit(cert)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(cert._id)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="h-20"></div> {/* Add spacing for bottom nav */}
+      <AdminBottomNav />
+    </div>
+  );
+};
+
+export default AdminCertificate;

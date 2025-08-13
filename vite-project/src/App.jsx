@@ -35,7 +35,8 @@ import ProductDetailPage from "./component/ProductDetailPage";
 import ProductCreateForm from "./component/ProductCreateForm.jsx";
 import Brand from "./component/Brand";
 import FAQ from "./component/FAQ";
-
+import AdminCertificate from "./component/AdminCertificate";
+import AdminTestimonials from "./component/AdminTestimonials.jsx";
 
 function App() {
   return (
@@ -77,6 +78,14 @@ function App() {
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/dashboard"
               element={
                 <ProtectedRoute>
@@ -92,9 +101,27 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/certificates"
+              element={
+                <ProtectedRoute>
+                  {/** Admin certificate management UI */}
+                  <AdminCertificate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/testimonials"
+              element={
+                <ProtectedRoute>
+                  <AdminTestimonials />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </main>
-        <Footer />
+        {/* Only show footer on non-admin pages */}
+        {!window.location.pathname.startsWith('/admin') && <Footer />}
       </div>
     </AuthProvider>
   );
