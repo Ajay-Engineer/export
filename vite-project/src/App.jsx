@@ -26,7 +26,7 @@ import TeaProducts from "./component/TeaProducts";
 import PalmJaggeryProducts from "./component/PalmJaggeryProducts";
 import EggProducts from "./component/EggProducts";
 import HealthMixProducts from "./component/HealthMixProducts";
-import HerbalProducts from "./component/HerbalProducts";
+import HerbalProducts from "./component/HerbalProducts.jsx";
 import HandicraftProducts from "./component/HandicraftProducts";
 import CoirProducts from "./component/CoirProducts";
 import ProductCategory from "./component/ProductCategory";

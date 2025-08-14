@@ -18,10 +18,10 @@ const AboutSection = ({ showVisionMission = true }) => {
           {/* Left - Core Info */}
           <div>
             <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-              Over a Decade of Trusted Excellence
+             Trusted Company
             </h3>
             <p className="text-gray-700 text-lg leading-relaxed">
-              With over 10 years of experience in the domestic market, Rebecca Exim has evolved into a globally focused export company committed to excellence, trust, and customer satisfaction. Founded by <span className="font-semibold text-gray-900">Mr. Jebaz Raja</span>, our journey began with a strong foundation in local trade and a deep understanding of sourcing quality products directly from manufacturers and farmers.
+             Rebecca Exim has evolved into a globally focused export company committed to excellence, trust, and customer satisfaction. Founded by <span className="font-semibold text-gray-900">Mr. Jebaz Raja</span>, our journey began with a strong foundation in local trade and a deep understanding of sourcing quality products directly from manufacturers and farmers.
             </p>
             <p className="text-gray-700 text-lg leading-relaxed mt-4">
               Today, we proudly extend our reach across <span className="font-semibold text-gray-900">Europe, the Middle East, and Southeast Asia</span>, delivering value through ethical practices, strict quality control, and dependable service. As a recognized member of the <span className="font-semibold text-gray-900">Federation of Indian Export Organisations (FIEO)</span>, we operate with transparency and dedication in every transaction.

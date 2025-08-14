@@ -1,0 +1,99 @@
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import axiosInstance from '../axios/axios.config';
+import ProductCard from "../component/Productclass";
+import ProductDetailPage from "../component/ProductDetailPage";
+
+const ProductList = ({ category, title, description }) => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        console.log(`Fetching products for category: ${category}`);
+        const response = await axiosInstance.get(`/products/category/${category.toLowerCase()}`);
+        console.log('Response:', response.data);
+        if (response.data?.products) {
+          setProducts(response.data.products);
+        } else if (Array.isArray(response.data)) {
+          setProducts(response.data);
+        } else {
+          setProducts([]);
+        }
+        setError(null);
+      } catch (err) {
+        console.error(`Error fetching ${category} products:`, err);
+        setError(`Failed to fetch ${category} products. Please try again later.`);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (category) {
+      setLoading(true);
+      fetchProducts();
+    }
+  }, [category]);
+
+  if (selected) {
+    return (
+      <div className="bg-white min-h-screen">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <button
+            onClick={() => setSelected(null)}
+            className="mb-6 text-sm text-red-700 hover:underline"
+          >
+            ← Back to {category} products
+          </button>
+          <ProductDetailPage product={selected} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {error && (
+        <div className="text-red-600 text-center mb-4 p-4 bg-red-50 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading {category} products...</p>
+        </div>
+      ) : products.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-600">No {category} products found.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((product) => (
+            <motion.div
+              key={product._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setSelected(product)}
+            >
+              <ProductCard
+                title={product.title}
+                description={product.shortDescription}
+                image={product.images?.[0] ? `http://localhost:3001${product.images[0]}` : '/placeholder.jpg'}
+                category={product.category}
+              />
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProductList;

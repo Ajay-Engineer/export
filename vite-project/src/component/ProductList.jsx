@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import ProductCard from "./Productclass";
 import ProductDetailPage from "./ProductDetailPage";
 
 const ProductList = ({ category, title, description }) => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -91,12 +93,9 @@ const ProductList = ({ category, title, description }) => {
   }
 
   return (
-    <div className="bg-white min-h-screen py-16">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">{title}</h2>
-          <p className="text-lg text-gray-600">{description}</p>
-        </div>
+    <div className="bg-white min-h-screen">
+      {/* Products Grid Section */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           initial={{ opacity: 0, y: 20 }}

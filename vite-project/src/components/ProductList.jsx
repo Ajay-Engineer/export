@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import axios from "axios";
+import axiosInstance from "../axios/axios.config";
 import ProductCard from "../component/Productclass";
 import ProductDetailPage from "../component/ProductDetailPage";
 
@@ -11,17 +11,29 @@ const ProductList = ({ category, title, description }) => {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
+    if (!category) return;
+
+    setLoading(true);
+    setError(null);
+
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/api/products/category/${category}`);
-        if (response.data && Array.isArray(response.data)) {
-          setProducts(response.data);
-        } else {
-          setError('Invalid data received from server');
+        const response = await axiosInstance.get(
+          `/products/category/${category.toLowerCase()}`
+        );
+
+        let data = [];
+        if (Array.isArray(response.data?.products)) {
+          data = response.data.products;
+        } else if (Array.isArray(response.data)) {
+          data = response.data;
         }
+
+        setProducts(data);
       } catch (err) {
-        setError(`Failed to fetch ${category} products. Please try again later.`);
         console.error(`Error fetching ${category} products:`, err);
+        setError(`Failed to fetch ${category} products. Please try again later.`);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -30,6 +42,12 @@ const ProductList = ({ category, title, description }) => {
     fetchProducts();
   }, [category]);
 
+  const formatImageUrl = (img) => {
+    if (!img) return "/placeholder.jpg"; // default fallback image
+    return img.startsWith("http") ? img : `http://localhost:3001${img}`;
+  };
+
+  // Detail page
   if (selected) {
     return (
       <div className="bg-white min-h-screen">
@@ -50,6 +68,7 @@ const ProductList = ({ category, title, description }) => {
     );
   }
 
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -58,13 +77,14 @@ const ProductList = ({ category, title, description }) => {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center p-4">
           <p className="text-red-600 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
           >
             Retry
@@ -74,22 +94,22 @@ const ProductList = ({ category, title, description }) => {
     );
   }
 
-  if (!products || products.length === 0) {
+  // No products
+  if (!products.length) {
     return (
       <div className="bg-white min-h-screen py-16">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">{title}</h2>
-            <p className="text-lg text-gray-600">{description}</p>
-          </div>
-          <div className="flex items-center justify-center">
-            <p className="text-gray-600 text-lg">No products available at the moment.</p>
-          </div>
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">{title}</h2>
+          <p className="text-lg text-gray-600">{description}</p>
+          <p className="text-gray-600 text-lg mt-6">
+            No products available at the moment.
+          </p>
         </div>
       </div>
     );
   }
 
+  // Product grid
   return (
     <div className="bg-white min-h-screen py-16">
       <div className="max-w-6xl mx-auto px-4">
@@ -97,7 +117,7 @@ const ProductList = ({ category, title, description }) => {
           <h2 className="text-3xl font-bold text-gray-900 mb-4">{title}</h2>
           <p className="text-lg text-gray-600">{description}</p>
         </div>
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -112,9 +132,7 @@ const ProductList = ({ category, title, description }) => {
               <ProductCard
                 title={product.name || product.title}
                 description={product.description}
-                image={product.images?.[0]?.startsWith('http') 
-                  ? product.images[0] 
-                  : `http://localhost:3001${product.images?.[0]}`}
+                image={formatImageUrl(product.images?.[0])}
                 onLearnMore={() => setSelected(product)}
               />
             </motion.div>

@@ -6,6 +6,17 @@ const path = require('path');
 const fs = require('fs');
 const slugify = require('slugify');
 
+// Product categories
+const VALID_CATEGORIES = [
+  'herbal',
+  'palm-jaggery',
+  'coir',
+  'tea',
+  'health-mix',
+  'handicraft',
+  'egg'
+];
+
 // Configure multer for image upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -36,30 +47,99 @@ const upload = multer({
   }
 });
 
+// Helper function to parse JSON safely
+const safeJSONParse = (str, defaultValue = null) => {
+  if (!str) return defaultValue;
+  try {
+    return JSON.parse(str);
+  } catch (error) {
+    console.error('JSON parse error:', error);
+    return defaultValue;
+  }
+};
+
+// Middleware to validate category
+const validateCategory = (req, res, next) => {
+  const category = req.params.category || req.body.category;
+  if (category && !VALID_CATEGORIES.includes(category)) {
+    return res.status(400).json({ error: 'Invalid category' });
+  }
+  next();
+};
+
 // Helper function to handle async route errors
 const asyncHandler = (fn) => (req, res, next) => {
-  return Promise.resolve(fn(req, res, next)).catch(next);
+  Promise.resolve(fn(req, res, next)).catch(next);
 };
+
+// Routes
+
+// Get all products with optional category filter
+router.get('/', asyncHandler(async (req, res) => {
+  const { category, sort, limit = 10, page = 1 } = req.query;
+  const query = category ? { category } : {};
+
+  const sortOptions = sort ? { [sort]: 1 } : { createdAt: -1 };
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  const [products, total] = await Promise.all([
+    Product.find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean(),
+    Product.countDocuments(query)
+  ]);
+
+  res.json({
+    products,
+    pagination: {
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit))
+    }
+  });
+}));
+
+// Get products by category
+router.get('/category/:category', validateCategory, asyncHandler(async (req, res) => {
+  const { sort, limit = 10, page = 1 } = req.query;
+  const query = { category: req.params.category };
+  
+  const [products, total] = await Promise.all([
+    Product.find(query)
+      .sort(sort ? { [sort]: 1 } : { createdAt: -1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit))
+      .lean(),
+    Product.countDocuments(query)
+  ]);
+
+  res.json({
+    products,
+    pagination: {
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit))
+    }
+  });
+}));
 
 // Create a new product
 router.post('/', upload.array('images', 5), asyncHandler(async (req, res) => {
-  console.log('Received request body:', req.body);
-  
-  // Extract all fields from request body
   const { 
     title,
     description,
     shortDescription,
     category,
-    subcategory,
-    price,
-    features,
     specifications,
-    stock
+    features,
+    videoUrl,
+    datasheetUrl,
+    certificationsData
   } = req.body;
 
-  // Log received data
-  console.log('Received fields:', {
+  console.log('Creating product with data:', {
     title,
     description,
     shortDescription,
@@ -77,216 +157,92 @@ router.post('/', upload.array('images', 5), asyncHandler(async (req, res) => {
     });
   }
 
-  // Generate slug from title
-  const generatedSlug = slugify(title, { lower: true, strict: true });
-
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: 'At least one image is required' });
-  }
-
   // Create slug from title
   const slug = slugify(title, { lower: true, strict: true });
 
-  // Process specifications if provided as a string
-  let specs = {};
-  if (specifications) {
-    try {
-      specs = JSON.parse(specifications);
-    } catch (error) {
-      console.error('Error parsing specifications:', error);
-    }
-  }
+  // Create the product data
+  const newProduct = new Product({
+    title,
+    slug,
+    description,
+    shortDescription,
+    category,
+    specifications: safeJSONParse(specifications, {}),
+    benefits: safeJSONParse(features, []),
+    certifications: safeJSONParse(certificationsData, []),
+    videoUrl: videoUrl || '',
+    datasheetUrl: datasheetUrl || '',
+    packaging: [],
+    faqs: [],
+    related: [],
+    images: req.files ? req.files.map(file => `/uploads/products/${file.filename}`) : []
+  });
 
-  // Save image paths
-  const imagePaths = req.files.map(file => `/upload/products/${file.filename}`);
+  // Save the product
+  await newProduct.save();
 
-  // Parse JSON strings for arrays and objects
-  let parsedBenefits = [];
-  let parsedPackaging = [];
-  let parsedCertifications = [];
-  let parsedFaqs = [];
-  let parsedRelated = [];
-
-  try {
-    if (req.body.benefits) parsedBenefits = JSON.parse(req.body.benefits);
-    if (req.body.packaging) parsedPackaging = JSON.parse(req.body.packaging);
-    if (req.body.certifications) parsedCertifications = JSON.parse(req.body.certifications);
-    if (req.body.faqs) parsedFaqs = JSON.parse(req.body.faqs);
-    if (req.body.related) parsedRelated = JSON.parse(req.body.related);
-  } catch (error) {
-    console.error('Error parsing JSON fields:', error);
-  }
-
-  try {
-    console.log('Creating product with data:', {
-      title,
-      slug: generatedSlug,
-      description,
-      shortDescription,
-      category,
-      specifications: specs,
-      benefits: parsedBenefits,
-      packaging: parsedPackaging,
-      certifications: parsedCertifications,
-      faqs: parsedFaqs,
-      related: parsedRelated
-    });
-
-    const product = new Product({
-      title,
-      slug: generatedSlug,
-      description,
-      shortDescription,
-      category,
-      images: imagePaths,
-      specifications: specs,
-      benefits: parsedBenefits,
-      packaging: parsedPackaging,
-      certifications: parsedCertifications,
-      faqs: parsedFaqs,
-      related: parsedRelated,
-      videoUrl: req.body.videoUrl || '',
-      datasheetUrl: req.body.datasheetUrl || ''
-    });
-
-    await product.validate();
-    await product.save();
-    res.status(201).json(product);
-  } catch (error) {
-    console.error('Error creating product:', error);
-    res.status(500).json({
-      error: 'Error creating product',
-      details: error.message,
-      validationErrors: error.errors
-    });
-  }
-
-  await product.save();
-  res.status(201).json(product);
-}));
-
-// Get all products with optional category filter
-router.get('/', asyncHandler(async (req, res) => {
-  const { category, search } = req.query;
-  let query = {};
-
-  if (category) {
-    query.category = category;
-  }
-
-  if (search) {
-    query.$text = { $search: search };
-  }
-
-  const products = await Product.find(query).sort({ createdAt: -1 });
-  res.json(products);
-}));
-
-// Get product by ID or slug
-router.get('/:identifier', asyncHandler(async (req, res) => {
-  const { identifier } = req.params;
-  let product;
-
-  if (mongoose.Types.ObjectId.isValid(identifier)) {
-    product = await Product.findById(identifier);
-  } else {
-    product = await Product.findOne({ slug: identifier });
-  }
-
-  if (!product) {
-    return res.status(404).json({ error: 'Product not found' });
-  }
-
-  res.json(product);
+  // Send response
+  res.status(201).json({
+    message: 'Product created successfully',
+    product: newProduct
+  });
 }));
 
 // Update product
 router.put('/:id', upload.array('images', 5), asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { title, description, category, subcategory, price, features, specifications, stock } = req.body;
+  console.log(`Updating product ${id}`);
   
-  const product = await Product.findById(id);
-  if (!product) {
+  const existingProduct = await Product.findById(id);
+  if (!existingProduct) {
     return res.status(404).json({ error: 'Product not found' });
   }
 
-  // Handle new images if provided
-  let imagePaths = product.images; // Keep existing images by default
+  const updateData = {
+    ...req.body,
+    specifications: safeJSONParse(req.body.specifications, {}),
+    benefits: safeJSONParse(req.body.features, []),
+    certifications: safeJSONParse(req.body.certificationsData, [])
+  };
+
   if (req.files && req.files.length > 0) {
-    // Delete old images
-    for (const oldImage of product.images) {
-      const oldImagePath = path.join(__dirname, '..', oldImage);
-      try {
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      } catch (err) {
-        console.error('Error deleting old image:', err);
-      }
-    }
-    // Save new image paths
-    imagePaths = req.files.map(file => `/upload/products/${file.filename}`);
+    updateData.images = req.files.map(file => `/uploads/products/${file.filename}`);
   }
 
-  // Process specifications if provided as a string
-  let specs = product.specifications;
-  if (specifications) {
-    try {
-      specs = JSON.parse(specifications);
-    } catch (error) {
-      console.error('Error parsing specifications:', error);
-    }
-  }
+  const updatedProduct = await Product.findByIdAndUpdate(
+    id, 
+    updateData,
+    { new: true, runValidators: true }
+  );
 
-  // Update slug if title changed
-  const slug = title ? slugify(title, { lower: true, strict: true }) : product.slug;
-
-  const updatedProduct = await Product.findByIdAndUpdate(id, {
-    ...(title && { title }),
-    ...(description && { description }),
-    ...(category && { category }),
-    ...(subcategory && { subcategory }),
-    ...(price && { price: Number(price) }),
-    ...(features && { features: JSON.parse(features) }),
-    specifications: specs,
-    ...(stock && { stock: Number(stock) }),
-    images: imagePaths,
-    slug
-  }, { new: true });
-
-  res.json(updatedProduct);
+  res.json({ 
+    message: 'Product updated successfully', 
+    product: updatedProduct 
+  });
 }));
 
 // Delete product
 router.delete('/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const product = await Product.findById(id);
+  console.log(`Deleting product ${id}`);
 
+  const product = await Product.findById(id);
   if (!product) {
     return res.status(404).json({ error: 'Product not found' });
   }
 
   // Delete associated images
-  for (const image of product.images) {
-    const imagePath = path.join(__dirname, '..', image);
-    try {
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+  if (product.images && product.images.length > 0) {
+    product.images.forEach(imagePath => {
+      const fullPath = path.join(__dirname, '..', 'upload', imagePath.replace(/^\/uploads\//, ''));
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
       }
-    } catch (err) {
-      console.error('Error deleting image:', err);
-    }
+    });
   }
 
   await Product.findByIdAndDelete(id);
   res.json({ message: 'Product deleted successfully' });
-}));
-
-// Get products by category
-router.get('/category/:category', asyncHandler(async (req, res) => {
-  const { category } = req.params;
-  const products = await Product.find({ category }).sort({ createdAt: -1 });
-  res.json(products);
 }));
 
 module.exports = router;

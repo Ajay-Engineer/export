@@ -83,6 +83,7 @@ const TestimonialsSection = () => {
       {/* Desktop View - Show all */}
       <div className="hidden md:grid grid-cols-2 gap-10 max-w-7xl mx-auto">
         {testimonials.map((testimonial, index) => (
+          console.log('Rendering testimonial:', testimonial), // Debug log
           <div
             key={index}
             className="bg-white text-black rounded-lg p-6 flex flex-col md:flex-row shadow-lg"
@@ -99,10 +100,12 @@ const TestimonialsSection = () => {
               }}
             />
             <div>
-              <h3 className="text-lg font-semibold mb-2">
+              <h3 className="text-2xl font-semibold mb-1">
                 {testimonial.name}
+                
               </h3>
-              <p className="text-base">{testimonial.quote}</p>
+              <span className="text-lg font-semibold">{testimonial.companyName}, {testimonial.country}</span> 
+              <p className="text-lg">{testimonial.quote}</p>
             </div>
           </div>
         ))}

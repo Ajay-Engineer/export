@@ -1,37 +1,40 @@
 
-
-const API_URL = '/api/products';
+import axiosInstance from '../../axios/axios.config';
 
 export const productService = {
   async addProduct(product) {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product),
-    });
-    if (!res.ok) throw new Error('Failed to add product');
-    return (await res.json()).id;
+    try {
+      const response = await axiosInstance.post('/products', product);
+      return response.data.id;
+    } catch (error) {
+      throw new Error('Failed to add product');
+    }
   },
 
   async getAllProducts() {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error('Failed to fetch products');
-    return await res.json();
+    try {
+      const response = await axiosInstance.get('/products');
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to fetch products');
+    }
   },
 
   async updateProduct(id, product) {
-    const res = await fetch(`${API_URL}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product),
-    });
-    if (!res.ok) throw new Error('Failed to update product');
-    return (await res.json()).id;
+    try {
+      const response = await axiosInstance.put(`/products/${id}`, product);
+      return response.data.id;
+    } catch (error) {
+      throw new Error('Failed to update product');
+    }
   },
 
   async deleteProduct(id) {
-    const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete product');
-    return true;
+    try {
+      await axiosInstance.delete(`/products/${id}`);
+      return true;
+    } catch (error) {
+      throw new Error('Failed to delete product');
+    }
   },
 };

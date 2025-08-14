@@ -21,10 +21,10 @@ const StatsSection = () => {
         "https://api.builder.io/api/v1/image/assets/TEMP/d9ac938592a35765bdaac7213b8cbd4e6e4cf7ce?width=198",
     },
     {
-      number: "10+ Years",
-      label: "Industry Experience",
+      number: "20+",
+      label: "Trusted Partners",
       image:
-        "https://api.builder.io/api/v1/image/assets/TEMP/d052f9e47dec1e3f1ee86037426ad4948b3c1205?width=234",
+        "https://api.builder.io/api/v1/image/assets/TEMP/e255d4399d24d34f5efbea5696981ec4837ca1d5?width=190",
     },
   ];
 

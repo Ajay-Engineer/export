@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Pencil, Trash2, Eye, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axiosInstance from '../axios/axios.config';
 import AdminBottomNav from './AdminBottomNav';
 import ProductCreateForm from './ProductCreateForm';
-
-const API_URL = 'http://localhost:3001/api';
 
 const categories = [
   { value: "", label: "All Products" },
@@ -32,22 +30,29 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       const url = selectedCategory 
-        ? `${API_URL}/products/category/${selectedCategory}`
-        : `${API_URL}/products`;
-      const response = await axios.get(url);
-      setProducts(response.data);
+        ? `/products/category/${selectedCategory}`
+        : `/products`;
+      const response = await axiosInstance.get(url);
+      setProducts(response.data.products || response.data || []); // Handle both response formats
     } catch (error) {
       console.error('Error fetching products:', error);
       alert('Failed to fetch products');
+      setProducts([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchProducts();
+  }, [selectedCategory]); // Re-fetch when category changes
+
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         const response = await axios.delete(`${API_URL}/products/${id}`);
+        // After successful deletion, refresh the product list
+        await fetchProducts();
         if (response.status !== 200) throw new Error('Failed to delete product');
         alert('Product deleted successfully');
         await fetchProducts();
