@@ -44,7 +44,13 @@ const ProductList = ({ category, title, description }) => {
 
   const formatImageUrl = (img) => {
     if (!img) return "/placeholder.jpg"; // default fallback image
-    return img.startsWith("http") ? img : `http://localhost:3001${img}`;
+    if (img.startsWith("http")) return img;
+    
+    const baseUrl = import.meta.env.MODE === 'production'
+      ? 'https://rebecca-exim-api.herokuapp.com'
+      : 'http://localhost:3001';
+    
+    return `${baseUrl}${img}`;
   };
 
   // Detail page

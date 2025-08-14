@@ -5,17 +5,32 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: process.env.NODE_ENV === 'production' 
+          ? 'https://rebecca-exim-api.herokuapp.com'
+          : 'http://localhost:3001',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/uploads': {
-        target: 'http://localhost:3001',
+        target: process.env.NODE_ENV === 'production'
+          ? 'https://rebecca-exim-api.herokuapp.com'
+          : 'http://localhost:3001',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       }
     },
   },
