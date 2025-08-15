@@ -6,6 +6,12 @@ const path = require('path');
 const fs = require('fs');
 const slugify = require('slugify');
 
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, '..', 'uploads', 'products');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 // Product categories
 const VALID_CATEGORIES = [
   'herbal',
@@ -20,7 +26,7 @@ const VALID_CATEGORIES = [
 // Configure multer for image upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '..', 'upload', 'products');
+    const uploadDir = path.join(__dirname, '..', 'uploads', 'products');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -226,23 +232,29 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
   console.log(`Deleting product ${id}`);
 
-  const product = await Product.findById(id);
-  if (!product) {
-    return res.status(404).json({ error: 'Product not found' });
-  }
+  try {
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
 
-  // Delete associated images
-  if (product.images && product.images.length > 0) {
-    product.images.forEach(imagePath => {
-      const fullPath = path.join(__dirname, '..', 'upload', imagePath.replace(/^\/uploads\//, ''));
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
+    // Delete associated images
+    if (product.images && product.images.length > 0) {
+      for (const imagePath of product.images) {
+        const fullPath = path.join(__dirname, '..', 'uploads', 'products', path.basename(imagePath));
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
       }
-    });
-  }
+    }
 
-  await Product.findByIdAndDelete(id);
-  res.json({ message: 'Product deleted successfully' });
+    await product.deleteOne();
+    res.json({ success: true, message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}));
 }));
 
 module.exports = router;

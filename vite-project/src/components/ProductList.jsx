@@ -42,6 +42,24 @@ const ProductList = ({ category, title, description }) => {
     fetchProducts();
   }, [category]);
 
+  const handleDelete = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axiosInstance.delete(`/products/${productId}`);
+      setProducts(products.filter(p => p._id !== productId));
+      alert('Product deleted successfully');
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      alert('Failed to delete product. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatImageUrl = (img) => {
     if (!img) return "/placeholder.jpg"; // default fallback image
     if (img.startsWith("http")) return img;

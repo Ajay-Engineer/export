@@ -24,6 +24,15 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads', 'products');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // MongoDB connection
 const connectDB = async () => {
   try {
