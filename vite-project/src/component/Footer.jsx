@@ -53,12 +53,17 @@ export default function Footer() {
             <li>
               <Link to="/brand" className="hover:text-blue-400 transition cursor-pointer">・Brand</Link>
             </li>
-            <li className="hover:text-blue-400 transition">・Payment Terms</li>
-            <li className="hover:text-blue-400 transition">・Contact Us</li>
-            <li className="hover:text-blue-400 transition">・About Us</li>
-            <li className="hover:text-blue-400 transition">・Privacy Policy</li>
+            <li>
+              <Link to="/Payment" className="hover:text-blue-400 transition cursor-pointer">・Payment Terms</Link>
+            </li>
+            <li>
+              <Link to="/contact" className="hover:text-blue-400 transition cursor-pointer">・Contact Us</Link>
+            </li>
+            <li>
+              <Link to="/about" className="hover:text-blue-400 transition cursor-pointer">・About Us</Link>
+            </li>
             <li className="hover:text-blue-400 transition">
-              ・Terms &amp; Conditions
+            ・Terms &amp; Conditions
             </li>
             <li>
               <Link

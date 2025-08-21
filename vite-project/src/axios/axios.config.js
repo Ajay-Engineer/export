@@ -6,6 +6,8 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
+  maxContentLength: Infinity,
+  maxBodyLength: Infinity
 });
 
 // Add a request interceptor

@@ -44,13 +44,14 @@ const ProductList = ({ category, title, description }) => {
 
   const formatImageUrl = (img) => {
     if (!img) return "/placeholder.jpg"; // default fallback image
+    if (typeof img !== 'string') return img;
     if (img.startsWith("http")) return img;
-    
+
     const baseUrl = import.meta.env.MODE === 'production'
       ? 'https://rebecca-exim-api.herokuapp.com'
       : 'http://localhost:3001';
-    
-    return `${baseUrl}${img}`;
+
+    return img.startsWith('/') ? `${baseUrl}${img}` : `${baseUrl}/${img}`;
   };
 
   // Detail page
@@ -66,7 +67,7 @@ const ProductList = ({ category, title, description }) => {
           </button>
           <ProductDetailPage
             {...selected}
-            mainImage={selected.images?.[0]}
+            mainImage={formatImageUrl(selected.images?.[0])}
             onBack={() => setSelected(null)}
           />
         </div>

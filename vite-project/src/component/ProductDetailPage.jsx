@@ -18,6 +18,7 @@ const fadeIn = {
 export default function ProductDetailPage({
   title,
   images = [],
+  mainImage = null,
   description,
   benefits = [],
   specifications = {},
@@ -27,6 +28,20 @@ export default function ProductDetailPage({
   datasheetUrl,
 }) {
   const [active, setActive] = useState(NAV[0].id);
+
+  // Convert backend-relative image paths to absolute URLs when needed
+  const formatImageUrl = (img) => {
+    if (!img) return null;
+    if (typeof img !== 'string') return img;
+    if (img.startsWith('http')) return img;
+
+    const baseUrl = import.meta.env.MODE === 'production'
+      ? 'https://rebecca-exim-api.herokuapp.com'
+      : 'http://localhost:3001';
+
+    // ensure leading slash
+    return img.startsWith('/') ? `${baseUrl}${img}` : `${baseUrl}/${img}`;
+  };
 
   useEffect(() => {
     const onScroll = () => {
@@ -86,9 +101,9 @@ export default function ProductDetailPage({
 
       {/* Hero Section */}
       <section className="w-full px-0 py-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-        {images.length > 0 && (
+        {((mainImage || (images && images.length > 0)) ) && (
           <motion.img
-            src={images[0]}
+            src={formatImageUrl(mainImage ?? images[0])}
             alt={title}
             className="w-full h-[400px] object-cover rounded-lg shadow-md"
             variants={fadeIn}

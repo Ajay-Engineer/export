@@ -75,6 +75,14 @@ export default function ProductsPage() {
             <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-center flex-1 text-gray-800 px-2">
               Our Products
             </h1>
+            {/* Right: Close button */}
+            <button
+              onClick={() => navigate('/')}
+              aria-label="Close"
+              className="ml-4 text-gray-600 hover:text-gray-900 bg-red-50 p-2 rounded-lg"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 

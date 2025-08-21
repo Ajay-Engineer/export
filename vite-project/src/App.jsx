@@ -5,6 +5,7 @@ import Footer from "./component/Footer";
 import ContactForm from "./component/Form.jsx";
 import PaymentTerms from "./component/PaymentTerms.jsx";
 import LandingPage from "./component/LandingPage";
+import ProductAdmin from "./pages/ProductAdmin";
 import ProductsPage from "./component/ProductsPage";
 import DynamicCategory from "./component/DynamicCategory";
 import CategoryManagement from "./component/CategoryManagement";
@@ -63,7 +64,14 @@ function App() {
             <Route path="/products/category" element={<ProductCategory />} />
             <Route path="/products/subcategory" element={<ProductSubcategory />} />
             <Route path="/products/:productId" element={<ProductDetailPage />} />
-            <Route path="/admin/add" element={<ProductCreateForm/>}/>
+            <Route 
+              path="/admin/add" 
+              element={
+                <ProtectedRoute>
+                  <ProductCreateForm />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Company Information Routes */}
             <Route path="/certificates" element={<CertificatesSection />} />
@@ -115,6 +123,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminTestimonials />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/products"
+              element={
+                <ProtectedRoute>
+                  <ProductAdmin />
                 </ProtectedRoute>
               }
             />
