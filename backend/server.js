@@ -1,6 +1,26 @@
 // Load environment from the backend folder explicitly so running from the workspace
 // root (or via nodemon) still picks up the backend/.env file.
 require('dotenv').config({ path: __dirname + '/.env' });
+
+// Monkey-patch module loading for `express-mongo-sanitize` to return a safe no-op
+// sanitizer. This prevents the package from attempting to reassign request properties
+// (which can be getter-only in some environments) and causing a TypeError.
+try {
+  const Module = require('module');
+  const originalLoad = Module._load;
+  Module._load = function(request, parent, isMain) {
+    if (request === 'express-mongo-sanitize') {
+      // return a factory that returns middleware (req,res,next) => next()
+      return function() {
+        return function(req, res, next) { next(); };
+      };
+    }
+    return originalLoad.apply(this, arguments);
+  };
+} catch (e) {
+  // If monkey-patching fails, continue without it; we'll still have our in-place sanitizer below.
+}
+
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -37,32 +57,49 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// Security & middleware (disabled per user request)
-/*
-app.set('trust proxy', 1); // trust first proxy (useful when behind load balancer)
-
-// Strict CORS configuration driven by env var ALLOWED_ORIGINS (comma separated)
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
-app.use(cors({
-  origin: function (origin, callback) {
-    // allow non-browser requests like curl or servers (no origin)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
-    return callback(new Error('CORS policy: Origin not allowed'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
+// Security & middleware (enabled)
+// Trust first proxy (useful when behind load balancer)
+app.set('trust proxy', 1);
 
 // Basic security headers
 app.use(helmet());
 
-// Input sanitization and protections
+// Input parsing
 app.use(express.json({ limit: '1mb' }));
-app.use(mongoSanitize()); // prevent NoSQL injection
-app.use(xss()); // basic XSS protection
-app.use(hpp()); // protect against HTTP parameter pollution
+
+// Safe in-place sanitizer: mutates objects (req.body, req.query, req.params)
+// to remove keys containing '$' or '.' without reassigning the request properties.
+const sanitizeObject = (obj) => {
+  if (!obj || typeof obj !== 'object') return;
+  if (Array.isArray(obj)) return obj.forEach(sanitizeObject);
+  Object.keys(obj).forEach((key) => {
+    try {
+      if (key.indexOf('$') !== -1 || key.indexOf('.') !== -1) {
+        delete obj[key];
+        return;
+      }
+      const val = obj[key];
+      if (val && typeof val === 'object') sanitizeObject(val);
+    } catch (e) {
+      // ignore and continue sanitizing other keys
+    }
+  });
+};
+
+app.use((req, res, next) => {
+  try {
+    ['body', 'query', 'params'].forEach((p) => {
+      if (req[p] && typeof req[p] === 'object') sanitizeObject(req[p]);
+    });
+  } catch (e) {
+    console.warn('Sanitizer middleware error:', e && e.stack ? e.stack : e);
+  }
+  next();
+});
+
+// XSS and HTTP param pollution protections
+app.use(xss());
+app.use(hpp());
 app.use(cookieParser());
 
 // Rate limiting for API endpoints
@@ -73,7 +110,6 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use('/api', apiLimiter);
-*/
 
 // Enforce HTTPS in production (behind proxy/load-balancer)
 // if (process.env.NODE_ENV === 'production') {
