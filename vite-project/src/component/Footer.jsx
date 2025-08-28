@@ -130,7 +130,7 @@ export default function Footer() {
           <h3 className="text-xl sm:text-2xl font-bold">Contact Details</h3>
           <ul className="space-y-3 text-lg text-white/90">
             <li className="flex items-center space-x-3 hover:text-blue-400 transition">
-              <span className="text-lg font-semibold text-white/90">JEBAZ RAJA (Managing Director)</span>
+              <span className="text-lg font-semibold text-white/90">JEBAZ RAJA <span className="text-sm ">( Managing Director )</span></span>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400 transition">
               <Phone className="w-5 h-5 text-white flex-shrink-0" />
@@ -200,7 +200,7 @@ export default function Footer() {
               href="#"
               className="font-semibold text-white hover:text-blue-400 transition"
             >
-              HIG Automation
+              HIG AI Automation
             </a>
             <br />
 

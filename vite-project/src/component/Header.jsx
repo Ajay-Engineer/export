@@ -18,10 +18,12 @@ import {
 import { Link } from "react-router-dom";
 import Logo from "../assets/rebeccaexim_logo.png";
 
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [isMobileProductOpen, setIsMobileProductOpen] = useState(false);
+  
 
   const navItems = [
     { label: "Home", href: "/" },
@@ -29,7 +31,6 @@ export default function Header() {
     { label: "Payment", href: "/payment" },
     { label: "Brand", href: "/brand" },
     { label: "About Us", href: "/about" },
-    { label: "Contact Us", href: "/contact" },
   ];
 
   const productCategories = [
@@ -137,9 +138,9 @@ export default function Header() {
               </Link>
             )
           )}
-          <button className="bg-red-600 text-white px-3 py-1 text-base rounded hover:bg-red-700 transition ml-2">
+          <Link to={("/contact")}><button  className="bg-red-600 text-white px-3 py-1 text-base rounded hover:bg-red-700 transition ml-2">
             Get Quote
-          </button>
+          </button></Link>
         </nav>
 
         {/* Mobile Menu Toggle */}
@@ -211,12 +212,9 @@ export default function Header() {
               </Link>
             )
           )}
-          <button
-            className="mt-2 bg-red-600 text-white px-4 py-2 w-full rounded hover:bg-red-700 transition"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link to={("/contact")}><button  className="bg-red-600 text-white px-3 py-1 text-base rounded hover:bg-red-700 transition ml-2">
             Get Quote
-          </button>
+          </button></Link>
         </div>
       )}
       {/* Owner Name Banner */}
