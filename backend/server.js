@@ -1,4 +1,6 @@
-require('dotenv').config();
+// Load environment from the backend folder explicitly so running from the workspace
+// root (or via nodemon) still picks up the backend/.env file.
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -17,20 +19,23 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// Minimal CORS for local dev: allow the frontend origin and handle preflight.
-// This is intentionally small so other security middleware remains disabled per user request.
-const DEV_ALLOWED = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && DEV_ALLOWED.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-  }
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-});
+// CORS configuration driven by ALLOWED_ORIGINS env; allows both dev and production origins.
+// Use the `cors` package so preflight handling and headers are correct.
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (e.g., server-to-server or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    return callback(new Error('CORS policy: Origin not allowed'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
 
 // Security & middleware (disabled per user request)
 /*
