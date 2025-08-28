@@ -17,7 +17,23 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// Security & middleware
+// Minimal CORS for local dev: allow the frontend origin and handle preflight.
+// This is intentionally small so other security middleware remains disabled per user request.
+const DEV_ALLOWED = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && DEV_ALLOWED.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+// Security & middleware (disabled per user request)
+/*
 app.set('trust proxy', 1); // trust first proxy (useful when behind load balancer)
 
 // Strict CORS configuration driven by env var ALLOWED_ORIGINS (comma separated)
@@ -52,17 +68,18 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use('/api', apiLimiter);
+*/
 
 // Enforce HTTPS in production (behind proxy/load-balancer)
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    const proto = req.headers['x-forwarded-proto'];
-    if (proto && proto !== 'https') {
-      return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
-    }
-    next();
-  });
-}
+// if (process.env.NODE_ENV === 'production') {
+//   app.use((req, res, next) => {
+//     const proto = req.headers['x-forwarded-proto'];
+//     if (proto && proto !== 'https') {
+//       return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+//     }
+//     next();
+//   });
+// }
 
 // MongoDB connection
 const connectDB = async () => {
@@ -121,7 +138,7 @@ mountSafe('/api/products', productRouter, 'productRouter');
 
 // SPA fallback or safe redirect: any non-API route should return index.html if a client build exists,
 // otherwise redirect to home '/' so the client can handle routing.
-app.get('*', (req, res, next) => {
+app.all('/{*any}', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   if (fs.existsSync(clientDist)) {
     return res.sendFile(path.join(clientDist, 'index.html'));
