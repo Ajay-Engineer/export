@@ -245,14 +245,14 @@ const AdminTestimonials = () => {
       {/* Testimonials List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {testimonials.map((testimonial) => (
-          <div key={testimonial._id} className="bg-white p-4 rounded-lg shadow flex gap-4">
+          <div key={testimonial._id} className=" p-4 rounded-lg shadow flex gap-4">
             <img
               src={`http://localhost:3001${testimonial.image}`}
               alt={testimonial.name}
               className="w-24 h-24 object-cover rounded"
             />
             <div className="flex-1">
-              <h3 className="font-semibold">{testimonial.name}</h3>
+              <h3 className="font-semibold">{testimonial.name}.{testimonial.companyName}</h3>
               <div className="text-gray-500 text-sm">
                 {testimonial.companyName && <span>{testimonial.companyName}</span>}
                 {testimonial.companyName && testimonial.country && <span> • </span>}

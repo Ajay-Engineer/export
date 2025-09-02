@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Pencil, Trash2, Eye, Plus, X } from "lucide-react";
+import { Pencil, Trash2, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from '../axios/axios.config';
 import AdminBottomNav from './AdminBottomNav';
@@ -22,22 +22,27 @@ const AdminDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+
+  const formatImageUrl = (img) => {
+    if (!img) return null;
+    if (img.startsWith("http")) return img;
+    const base = import.meta.env.MODE === 'production' ? 'https://rebecca-exim-api.herokuapp.com' : 'http://localhost:3001';
+    return img.startsWith('/') ? `${base}${img}` : `${base}/${img}`;
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const url = selectedCategory 
-        ? `/products/category/${selectedCategory}`
-        : `/products`;
-      const response = await axiosInstance.get(url);
-      setProducts(response.data.products || response.data || []); // Handle both response formats
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      alert('Failed to fetch products');
-      setProducts([]); // Set empty array on error
+      const url = selectedCategory ? `/products/category/${selectedCategory}` : `/products`;
+      const res = await axiosInstance.get(url);
+      const data = res.data.products || res.data || [];
+      setProducts(data);
+    } catch (err) {
+      console.error('Error fetching products', err);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -45,7 +50,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [selectedCategory]); // Re-fetch when category changes
+  }, [selectedCategory]);
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
@@ -66,198 +71,146 @@ const AdminDashboard = () => {
 
   const handleSubmit = async (formData, isEdit = false) => {
     try {
-      const url = isEdit 
-        ? `${API_URL}/products/${selectedProduct._id}`
-        : `${API_URL}/products`;
-      
-      const response = await axios({
-        method: isEdit ? 'PUT' : 'POST',
-        url: url,
-        data: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      });
-
-      if (response.status !== 201 && response.status !== 200) {
-        throw new Error('Failed to save product');
+      const url = isEdit ? `/products/${selectedProduct?._id}` : `/products`;
+      const method = isEdit ? 'put' : 'post';
+      const res = await axiosInstance({ method, url, data: formData, headers: { 'Content-Type': 'multipart/form-data' } });
+      if (res.status === 200 || res.status === 201) {
+        await fetchProducts();
+        setShowAddModal(false);
+        setShowEditModal(false);
+        setSelectedProduct(null);
       }
-      
-      alert(isEdit ? 'Product updated successfully' : 'Product created successfully');
-      await fetchProducts();
-      setShowAddModal(false);
-      setShowEditModal(false);
-      setSelectedProduct(null);
-    } catch (error) {
-      console.error('Error saving product:', error);
-      alert('Failed to save product: ' + error.message);
+      return res;
+    } catch (err) {
+      console.error('Save failed', err);
+      throw err;
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, [selectedCategory]); // Re-fetch when category changes
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <div className="space-x-2">
-          <button 
-            onClick={() => setShowAddModal(true)} 
-            className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Add Product
-          </button>
-          <button onClick={() => navigate("/admin/certificates")} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">Manage Certificates</button>
-          <button onClick={() => navigate("/admin/testimonials")} className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white">Manage Testimonials</button>
-        </div>
-      </div>
+    <div className="min-h-screen p-6 bg-gray-50">
+      <div className="max-w-7xl mx-auto flex gap-6">
+        {/* Sidebar */}
+        <aside className="hidden md:block w-64">
+          <div className="bg-white rounded-lg shadow p-4">
+            <nav className="space-y-2">
+              <button onClick={() => navigate('/admin')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Dashboard</button>
+              <button onClick={() => navigate('/admin/products')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Products</button>
+              <button onClick={() => navigate('/admin/categories')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Categories</button>
+              <button onClick={() => navigate('/admin/certificates')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Certificates</button>
+              <button onClick={() => navigate('/admin/testimonials')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Testimonials</button>
+            </nav>
+          </div>
+        </aside>
 
-      {/* Category Filter */}
-      <div className="mb-6">
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="p-2 border rounded-md min-w-[200px]"
-        >
-          {categories.map(cat => (
-            <option key={cat.value} value={cat.value}>{cat.label}</option>
-          ))}
-        </select>
-      </div>
+        {/* Main */}
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setShowAddModal(true)} className="inline-flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded">
+                <Plus className="w-4 h-4" /> Add Product
+              </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Filter</label>
+                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="p-2 border rounded-md min-w-[200px]">
+                  <option value="">All Products</option>
+                  {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <button onClick={() => fetchProducts()} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Refresh</button>
+            </div>
+          </div>
 
-      {/* Products Table */}
-      <div className="overflow-x-auto bg-white rounded-lg shadow">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Short Description</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <div className="bg-white rounded-lg shadow p-4">
             {loading ? (
-              <tr>
-                <td colSpan="6" className="text-center py-4">Loading products...</td>
-              </tr>
+              <div className="text-center py-8">Loading products...</div>
             ) : products.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="text-center py-4">No products found</td>
-              </tr>
+              <div className="text-center py-8">No products found</div>
             ) : (
-              products.map((product) => (
-                <tr key={product._id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {product.images && product.images[0] && (
-                      <img 
-                        src={`http://localhost:3001${product.images[0]}`}
-                        alt={product.title}
-                        className="w-16 h-16 object-cover rounded"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = 'placeholder-image-url';
-                        }}
-                      />
-                    )}
-                  </td>
-                  <td className="px-6 py-4">{product.title}</td>
-                  <td className="px-6 py-4">{product.category}</td>
-                  <td className="px-6 py-4">{product.shortDescription}</td>
-                  <td className="px-6 py-4">{product.description?.substring(0, 50)}...</td>
-                  <td className="px-6 py-4 space-x-2">
-                    <button 
-                      onClick={() => {
-                        setSelectedProduct(product);
-                        setShowViewModal(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setSelectedProduct(product);
-                        setShowEditModal(true);
-                      }}
-                      className="text-yellow-600 hover:text-yellow-800"
-                    >
-                      <Pencil className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(product._id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))
+              <>
+                {/* Mobile cards */}
+                <div className="grid grid-cols-1 gap-4 md:hidden">
+                  {products.map((product) => (
+                    <div key={product._id} className="p-4 border rounded-lg flex items-start gap-4">
+                      <div className="w-20 h-20 flex-shrink-0">
+                        {product.images?.[0] && (
+                          <img src={formatImageUrl(product.images[0])} alt={product.title || product.name} className="w-full h-full object-cover rounded" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{product.title || product.name}</h3>
+                        <p className="text-sm text-gray-600">{product.shortDescription}</p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <button onClick={() => { setSelectedProduct(product); setShowEditModal(true); }} className="px-2 py-1 rounded bg-yellow-100 text-yellow-800">Edit</button>
+                          <button onClick={() => handleDelete(product._id)} className="px-2 py-1 rounded bg-red-100 text-red-700">Delete</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block">
+                  <table className="min-w-full w-full table-auto">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Short Description</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {products.map((product) => (
+                        <tr key={product._id}>
+                          <td className="px-4 py-3">
+                            {product.images && product.images[0] && (
+                              <img src={formatImageUrl(product.images[0])} alt={product.title || product.name} className="w-12 h-12 object-cover rounded" />
+                            )}
+                          </td>
+                          <td className="px-4 py-3">{product.title || product.name}</td>
+                          <td className="px-4 py-3">{product.category}</td>
+                          <td className="px-4 py-3">{product.shortDescription}</td>
+                          <td className="px-4 py-3">
+                            <button onClick={() => { setSelectedProduct(product); setShowEditModal(true); }} className="text-yellow-600 hover:text-yellow-800 mr-3"><Pencil className="w-5 h-5" /></button>
+                            <button onClick={() => handleDelete(product._id)} className="text-red-600 hover:text-red-800"><Trash2 className="w-5 h-5" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
 
       {/* Add/Edit Modal */}
       {(showAddModal || showEditModal) && (
-        <ProductCreateForm
-          isEdit={showEditModal}
-          product={selectedProduct}
-          onClose={() => {
-            setShowAddModal(false);
-            setShowEditModal(false);
-            setSelectedProduct(null);
-          }}
-          onSubmit={handleSubmit}
-        />
-      )}
-
-      {/* View Modal */}
-      {showViewModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold">{selectedProduct.title}</h2>
-              <button onClick={() => setShowViewModal(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => { setShowAddModal(false); setShowEditModal(false); setSelectedProduct(null); }} />
+          <div className="relative bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">{showEditModal ? 'Edit Product' : 'Add Product'}</h3>
+              <button onClick={() => { setShowAddModal(false); setShowEditModal(false); setSelectedProduct(null); }} className="p-2 text-gray-600 hover:text-gray-900">
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold">Category</h3>
-                  <p>{selectedProduct.category}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Price</h3>
-                  <p>₹{selectedProduct.price}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Stock</h3>
-                  <p>{selectedProduct.stock}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Description</h3>
-                  <p>{selectedProduct.description}</p>
-                </div>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Images</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {selectedProduct.images.map((image, index) => (
-                    <img
-                      key={index}
-                      src={`http://localhost:3001${image}`}
-                      alt={`${selectedProduct.title} ${index + 1}`}
-                      className="w-full h-32 object-cover rounded"
-                    />
-                  ))}
-                </div>
-              </div>
+            <div className="p-4">
+              <ProductCreateForm
+                isEdit={showEditModal}
+                product={selectedProduct}
+                onClose={() => {
+                  setShowAddModal(false);
+                  setShowEditModal(false);
+                  setSelectedProduct(null);
+                }}
+                onSubmit={handleSubmit}
+              />
             </div>
           </div>
         </div>

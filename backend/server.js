@@ -5,6 +5,11 @@ const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 const certificateRouter = require('./routes/certificate');
 const testimonialRouter = require('./routes/testimonial');
 const productRouter = require('./routes/product');
@@ -12,16 +17,31 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// CORS configuration
+// Security & middleware
+app.set('trust proxy', 1); // trust first proxy (useful when behind load balancer)
+
+// Strict CORS configuration driven by env var ALLOWED_ORIGINS (comma separated)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Allow both Vite and React default ports
+  origin: function (origin, callback) {
+    // allow non-browser requests like curl or servers (no origin)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    return callback(new Error('CORS policy: Origin not allowed'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// Middleware
-app.use(express.json());
+// Basic security headers
+app.use(helmet());
+
+// Input sanitization and protections
+app.use(express.json({ limit: '1mb' }));
+app.use(mongoSanitize()); // prevent NoSQL injection
+app.use(xss()); // basic XSS protection
+app.use(hpp()); // protect against HTTP parameter pollution
 app.use(cookieParser());
 
 // Serve static files from uploads directory
@@ -117,6 +137,7 @@ mongoose.connection.once('open', () => {
     console.log(`Server running on port ${PORT}`);
   });
 });
+}
 
 mongoose.connection.on('error', (err) => {
   console.error('MongoDB connection error:', err);
