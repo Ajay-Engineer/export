@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import emailjs from '@emailjs/browser';
 import LogoPlaceholder from "../assets/rebeccaexim_logo.png"
 // Placeholder for the logo image. In a real application, you'd host this image.
 
@@ -90,8 +91,8 @@ export default function App() {
       return;
     }
 
-    // EmailJS is loaded via CDN in the HTML wrapper
-    window.emailjs.send(
+    // Send email using EmailJS
+    emailjs.send(
       serviceId,
       templateId,
       formData,
