@@ -46,18 +46,34 @@ const connectDB = async () => {
 
 connectDB();
 
-// Create upload directory if it doesn't exist
-const uploadDir = path.join(__dirname, 'upload');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// API Routes
+app.use('/api/products', productRouter);
 
-// Serve static files
-app.use('/upload', express.static(path.join(__dirname, 'upload')));
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      success: false,
+      error: 'File upload error: ' + err.message
+    });
+  }
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || 'Internal Server Error'
+  });
+});
+app.use('/api/certificates', certificateRouter);
+app.use('/api/testimonials', testimonialRouter);
 
-// Serve uploaded images
-app.use('/uploads', express.static(uploadDir));
-app.use('/static', express.static(uploadDir));
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    success: false, 
+    error: err.message || 'Something went wrong!' 
+  });
+});
 
 // Routes
 app.use('/api/certificates', certificateRouter);

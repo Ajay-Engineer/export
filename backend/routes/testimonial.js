@@ -4,23 +4,25 @@ const Testimonial = require('../models/Testimonial');
 const multer = require('multer');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Configure multer for image upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '..', 'upload')); // Changed from 'uploads' to 'upload'
-  },
-  filename: function (req, file, cb) {
-    cb(null, `testimonial-${Date.now()}${path.extname(file.originalname)}`);
-  }
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Create upload directory if it doesn't exist
-const fs = require('fs');
-const uploadDir = path.join(__dirname, '..', 'upload'); // Changed from 'uploads' to 'upload'
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Configure Cloudinary storage
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'testimonials',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    transformation: [{ width: 800, height: 800, crop: 'limit' }],
+  },
+});
 
 // Add file filter for images
 const fileFilter = (req, file, cb) => {
@@ -30,8 +32,9 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-const upload = multer({ 
-  storage: storage,
+// Configure multer with Cloudinary storage
+const upload = multer({
+  storage: cloudinaryStorage,
   fileFilter: fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
@@ -77,7 +80,7 @@ router.get('/', async (req, res) => {
 });
 
 // Create new testimonial (admin only)
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', verifyToken, upload.single('image'), async (req, res) => {
   try {
     console.log('Request body:', req.body);
     console.log('File:', req.file);
@@ -86,18 +89,21 @@ router.post('/', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'Image is required' });
     }
     
+    const imageUrl = req.file.path; // Cloudinary URL
+    
     const testimonial = new Testimonial({
       name: req.body.name,
       companyName: req.body.companyName,
       country: req.body.country,
       quote: req.body.quote,
-      image: `/upload/${req.file.filename}`
+      image: imageUrl
     });
 
     const newTestimonial = await testimonial.save();
-    res.status(201).json(newTestimonial);
+    res.status(201).json({ success: true, testimonial: newTestimonial });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error creating testimonial:', err);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -106,7 +112,7 @@ router.patch('/:id', verifyToken, upload.single('image'), async (req, res) => {
   try {
     const testimonial = await Testimonial.findById(req.params.id);
     if (!testimonial) {
-      return res.status(404).json({ message: 'Testimonial not found' });
+      return res.status(404).json({ success: false, message: 'Testimonial not found' });
     }
 
     // Update text fields if provided
@@ -117,24 +123,23 @@ router.patch('/:id', verifyToken, upload.single('image'), async (req, res) => {
 
     // Handle image update
     if (req.file) {
-      // Delete old image if it exists
+      // Delete old image from Cloudinary if it exists
       if (testimonial.image) {
-        const oldImagePath = path.join(__dirname, '..', testimonial.image);
+        const publicId = testimonial.image.split('/').pop().split('.')[0];
         try {
-          if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath);
-          }
+          await cloudinary.uploader.destroy(`testimonials/${publicId}`);
         } catch (err) {
-          console.error('Error deleting old image:', err);
+          console.error('Error deleting old image from Cloudinary:', err);
         }
       }
-      testimonial.image = `/upload/${req.file.filename}`;
+      testimonial.image = req.file.path;
     }
 
     const updatedTestimonial = await testimonial.save();
-    res.json(updatedTestimonial);
+    res.json({ success: true, testimonial: updatedTestimonial });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error updating testimonial:', err);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -143,25 +148,24 @@ router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const testimonial = await Testimonial.findById(req.params.id);
     if (!testimonial) {
-      return res.status(404).json({ message: 'Testimonial not found' });
+      return res.status(404).json({ success: false, message: 'Testimonial not found' });
     }
 
-    // Delete the image file
+    // Delete the image from Cloudinary
     if (testimonial.image) {
-      const imagePath = path.join(__dirname, '..', testimonial.image);
+      const publicId = testimonial.image.split('/').pop().split('.')[0];
       try {
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-        }
+        await cloudinary.uploader.destroy(`testimonials/${publicId}`);
       } catch (err) {
-        console.error('Error deleting image file:', err);
+        console.error('Error deleting image from Cloudinary:', err);
       }
     }
 
     await Testimonial.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Testimonial deleted' });
+    res.json({ success: true, message: 'Testimonial deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error deleting testimonial:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

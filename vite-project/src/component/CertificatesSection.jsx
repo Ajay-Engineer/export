@@ -1,3 +1,4 @@
+
 import { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -12,7 +13,13 @@ const CertificatesSection = () => {
         const response = await fetch('http://localhost:3001/api/certificates');
         if (!response.ok) throw new Error('Failed to fetch certificates');
         const data = await response.json();
-        setCertificates(data);
+        
+        if (data.success && Array.isArray(data.certificates)) {
+          setCertificates(data.certificates);
+        } else {
+          console.error('Invalid data format:', data);
+          setCertificates([]);
+        }
       } catch (error) {
         console.error('Error fetching certificates:', error);
         setCertificates([]);
@@ -72,11 +79,12 @@ const CertificatesSection = () => {
                 className="min-w-[240px] max-w-[260px] bg-white rounded-lg shadow hover:shadow-xl transition-shadow duration-300"
               >
                 <img
-                  src={`http://localhost:3001${certificate.image}`}
+                  src={certificate.image || '/placeholder-certificate.png'}
                   alt={certificate.title || `Certificate ${index + 1}`}
                   className="w-full h-[300px] object-contain rounded-t-lg"
                   onError={(e) => {
                     console.error('Image load error:', certificate.image);
+                    e.target.src = '/placeholder-certificate.png';
                     e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';
                   }}
                 />

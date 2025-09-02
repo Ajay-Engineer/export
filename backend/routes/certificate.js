@@ -3,51 +3,42 @@ const router = express.Router();
 const Certificate = require('../models/Certificate');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 // Helper function to handle async routes
 const asyncHandler = (fn) => (req, res, next) => {
   return Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../upload');
-try {
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-  // Test write permissions
-  const testFile = path.join(uploadDir, '.test');
-  fs.writeFileSync(testFile, 'test');
-  fs.unlinkSync(testFile);
-  console.log('Upload directory ready:', uploadDir);
-} catch (error) {
-  console.error('Error with upload directory:', error);
-  throw new Error('Failed to setup upload directory');
-}
-
-// Multer config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    // Sanitize filename
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}${ext}`);
-  }
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Configure Cloudinary storage
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'certificates',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    transformation: [{ width: 1200, height: 1200, crop: 'limit' }],
+  },
+});
+
+// Add file filter for images
 const fileFilter = (req, file, cb) => {
-  // Accept images only
   if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
     return cb(new Error('Only image files are allowed!'), false);
   }
   cb(null, true);
 };
 
+// Configure multer with Cloudinary storage
 const upload = multer({
-  storage: storage,
+  storage: cloudinaryStorage,
   fileFilter: fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
@@ -56,35 +47,42 @@ const upload = multer({
 
 // Add certificate
 router.post('/add', upload.single('image'), asyncHandler(async (req, res) => {
-  const { title } = req.body;
-  
-  if (!title) {
-    return res.status(400).json({ error: 'Title is required' });
-  }
-  
-  if (!req.file) {
-    return res.status(400).json({ error: 'Image is required' });
-  }
-
-  // Store the relative path in the database
-  const filename = req.file.filename;
-  const image = `/upload/${filename}`;
-  console.log('Saving certificate:', { 
-    title, 
-    image,
-    fullPath: path.join(__dirname, '../upload', filename)
-  });
   try {
-    const cert = new Certificate({ title, image });
+    const { title } = req.body;
+    
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'Title is required' });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Image is required' });
+    }
+
+    // Store the Cloudinary URL in the database
+    const imageUrl = req.file.path;
+    console.log('Saving certificate:', { 
+      title, 
+      imageUrl
+    });
+
+    const cert = new Certificate({ 
+      title, 
+      image: imageUrl 
+    });
     await cert.save();
-    console.log('Certificate saved successfully:', cert); // Debug log
-    res.status(201).json(cert);
+    
+    console.log('Certificate saved successfully:', cert);
+    res.status(201).json({ 
+      success: true, 
+      certificate: cert 
+    });
   } catch (error) {
     console.error('Error saving certificate:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
-  
-  res.status(201).json(cert);
 }));
 
 // Edit certificate
@@ -93,31 +91,29 @@ router.put('/edit/:id', upload.single('image'), async (req, res) => {
     const { title } = req.body;
     const oldCert = await Certificate.findById(req.params.id);
     if (!oldCert) {
-      return res.status(404).json({ error: 'Certificate not found' });
+      return res.status(404).json({ success: false, error: 'Certificate not found' });
     }
 
     const update = { title };
     if (req.file) {
-      // Delete old image if it exists
+      // Delete old image from Cloudinary if it exists
       if (oldCert.image) {
-        const oldImagePath = path.join(__dirname, '..', oldCert.image);
         try {
-          if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath);
-          }
+          const publicId = oldCert.image.split('/').pop().split('.')[0];
+          await cloudinary.uploader.destroy(`certificates/${publicId}`);
         } catch (err) {
-          console.error('Error deleting old image:', err);
+          console.error('Error deleting old image from Cloudinary:', err);
         }
       }
-      update.image = `/upload/${req.file.filename}`;
+      update.image = req.file.path; // Cloudinary URL
     }
 
     const cert = await Certificate.findByIdAndUpdate(req.params.id, update, { new: true });
-    console.log('Updated certificate:', cert); // Debug log
-    res.json(cert);
+    console.log('Updated certificate:', cert);
+    res.json({ success: true, certificate: cert });
   } catch (error) {
     console.error('Error updating certificate:', error);
-    res.status(500).json({ error: 'Failed to update certificate' });
+    res.status(500).json({ success: false, error: 'Failed to update certificate' });
   }
 });
 
@@ -126,7 +122,7 @@ router.delete('/delete/:id', async (req, res) => {
   try {
     const cert = await Certificate.findById(req.params.id);
     if (!cert) {
-      return res.status(404).json({ error: 'Certificate not found' });
+      return res.status(404).json({ success: false, error: 'Certificate not found' });
     }
 
     // Delete image file if it exists
@@ -159,11 +155,17 @@ router.get('/preview/:id', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const certs = await Certificate.find().sort({ createdAt: -1 });
-    console.log('Found certificates:', certs); // Debug log
-    res.json(certs);
+    console.log('Found certificates:', certs);
+    res.json({ 
+      success: true, 
+      certificates: certs 
+    });
   } catch (error) {
     console.error('Error fetching certificates:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 });
 

@@ -50,12 +50,13 @@ const AdminDashboard = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
-        const response = await axios.delete(`${API_URL}/products/${id}`);
-        // After successful deletion, refresh the product list
-        await fetchProducts();
-        if (response.status !== 200) throw new Error('Failed to delete product');
-        alert('Product deleted successfully');
-        await fetchProducts();
+        const response = await axiosInstance.delete(`/products/${id}`);
+        if (response.data.success) {
+          alert('Product deleted successfully');
+          await fetchProducts(); // Refresh the product list
+        } else {
+          throw new Error(response.data.error || 'Failed to delete product');
+        }
       } catch (error) {
         console.error('Error deleting product:', error);
         alert('Failed to delete product');

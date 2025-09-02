@@ -1,0 +1,219 @@
+const express = require('express');
+const router = express.Router();
+const Product = require('../models/Product');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const slugify = require('slugify');
+
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, '..', 'upload', 'products');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure multer for image upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Not an image! Please upload only images.'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+// GET all products
+router.get('/', async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 });
+    res.json({ success: true, products });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET products by category
+router.get('/category/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const products = await Product.find({ category }).sort({ createdAt: -1 });
+    res.json({ success: true, products });
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET single product
+router.get('/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+    res.json({ success: true, product });
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST create new product
+router.post('/', upload.array('images', 5), async (req, res) => {
+  try {
+    const {
+      title,
+      category,
+      shortDescription,
+      description,
+      specifications,
+      features,
+      videoUrl,
+      datasheetUrl
+    } = req.body;
+
+    // Create slug from title
+    const slug = slugify(title, { lower: true, strict: true });
+
+    // Get image paths
+    const images = req.files ? req.files.map(file => `/upload/products/${file.filename}`) : [];
+
+    const product = new Product({
+      title,
+      slug,
+      category,
+      shortDescription,
+      description,
+      specifications: specifications ? JSON.parse(specifications) : [],
+      features: features ? JSON.parse(features) : [],
+      images,
+      videoUrl,
+      datasheetUrl
+    });
+
+    await product.save();
+    res.status(201).json({ success: true, product });
+  } catch (error) {
+    // Delete uploaded files if product creation fails
+    if (req.files) {
+      req.files.forEach(file => {
+        fs.unlink(file.path, err => {
+          if (err) console.error('Error deleting file:', err);
+        });
+      });
+    }
+    console.error('Error creating product:', error);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// PUT update product
+router.put('/:id', upload.array('images', 5), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    const {
+      title,
+      category,
+      shortDescription,
+      description,
+      specifications,
+      features,
+      videoUrl,
+      datasheetUrl
+    } = req.body;
+
+    // Handle new images if uploaded
+    let images = product.images;
+    if (req.files && req.files.length > 0) {
+      // Delete old images
+      product.images.forEach(imagePath => {
+        const fullPath = path.join(__dirname, '..', imagePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      });
+      // Add new images
+      images = req.files.map(file => `/upload/products/${file.filename}`);
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        slug: title ? slugify(title, { lower: true, strict: true }) : product.slug,
+        category,
+        shortDescription,
+        description,
+        specifications: specifications ? JSON.parse(specifications) : product.specifications,
+        features: features ? JSON.parse(features) : product.features,
+        images,
+        videoUrl,
+        datasheetUrl
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({ success: true, product: updatedProduct });
+  } catch (error) {
+    // Delete new uploaded files if update fails
+    if (req.files) {
+      req.files.forEach(file => {
+        fs.unlink(file.path, err => {
+          if (err) console.error('Error deleting file:', err);
+        });
+      });
+    }
+    console.error('Error updating product:', error);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// DELETE product
+router.delete('/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    // Delete associated images
+    if (product.images && product.images.length > 0) {
+      product.images.forEach(imagePath => {
+        const fullPath = path.join(__dirname, '..', imagePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      });
+    }
+
+    await product.deleteOne();
+    res.json({ success: true, message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+module.exports = router;

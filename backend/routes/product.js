@@ -3,14 +3,16 @@ const router = express.Router();
 const Product = require('../models/Product');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const slugify = require('slugify');
 
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '..', 'uploads', 'products');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Product categories
 const VALID_CATEGORIES = [
@@ -23,21 +25,17 @@ const VALID_CATEGORIES = [
   'egg'
 ];
 
-// Configure multer for image upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '..', 'uploads', 'products');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
+// Configure Cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'products',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    transformation: [{ width: 1200, height: 1200, crop: 'limit' }],
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
-  }
 });
 
+// Add file filter for images
 const fileFilter = (req, file, cb) => {
   if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
     return cb(new Error('Only image files are allowed!'), false);
@@ -45,11 +43,13 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
+// Configure multer with Cloudinary storage
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 4 // Maximum 4 files allowed
   }
 });
 
@@ -97,8 +97,9 @@ router.get('/', asyncHandler(async (req, res) => {
     Product.countDocuments(query)
   ]);
 
-  res.json({
-    products,
+  res.json({ 
+    success: true, 
+    products: products,
     pagination: {
       total,
       page: parseInt(page),
@@ -132,118 +133,207 @@ router.get('/category/:category', validateCategory, asyncHandler(async (req, res
 }));
 
 // Create a new product
-router.post('/', upload.array('images', 5), asyncHandler(async (req, res) => {
-  const { 
-    title,
-    description,
-    shortDescription,
-    category,
-    specifications,
-    features,
-    videoUrl,
-    datasheetUrl,
-    certificationsData
-  } = req.body;
+router.post('/', upload.fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'certificateFile_0', maxCount: 1 }
+]), asyncHandler(async (req, res) => {
+  try {
+    const { 
+      title,
+      description,
+      shortDescription,
+      category,
+      specifications,
+      features,
+      videoUrl,
+      datasheetUrl,
+      certificationsData
+    } = req.body;
 
-  console.log('Creating product with data:', {
-    title,
-    description,
-    shortDescription,
-    category
-  });
+    console.log('Creating product with data:', {
+      title,
+      description,
+      shortDescription,
+      category,
+      certificationsData
+    });
 
-  // Validate required fields
-  const requiredFields = ['title', 'category', 'shortDescription', 'description'];
-  const missingFields = requiredFields.filter(field => !req.body[field]);
-  
-  if (missingFields.length > 0) {
-    return res.status(400).json({ 
-      error: `Missing required fields: ${missingFields.join(', ')}`,
-      receivedFields: req.body
+    // Validate required fields
+    const requiredFields = ['title', 'category', 'shortDescription', 'description'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        success: false,
+        error: `Missing required fields: ${missingFields.join(', ')}`,
+        receivedFields: req.body
+      });
+    }
+
+    // Create slug from title
+    const slug = slugify(title, { lower: true, strict: true });
+
+    // Process certifications
+    const certifications = safeJSONParse(certificationsData, []);
+    const processedCertifications = [];
+    
+    // Handle certificate files
+    if (certifications && certifications.length > 0) {
+      for (const cert of certifications) {
+        const certFile = req.files[`certificateFile_${cert.index}`]?.[0];
+        if (certFile) {
+          processedCertifications.push({
+            ...cert,
+            url: certFile.path // Cloudinary URL
+          });
+        } else {
+          processedCertifications.push(cert);
+        }
+      }
+    }
+
+    // Get image URLs from uploaded files
+    const imageUrls = req.files.images ? req.files.images.map(file => file.path) : [];
+
+    // Create the product data
+    const newProduct = new Product({
+      title,
+      slug,
+      description,
+      shortDescription,
+      category,
+      specifications: safeJSONParse(specifications, {}),
+      benefits: safeJSONParse(features, []),
+      certifications: processedCertifications,
+      videoUrl: videoUrl || '',
+      datasheetUrl: datasheetUrl || '',
+      packaging: [],
+      faqs: [],
+      related: [],
+      images: imageUrls
+    });
+
+    // Save the product
+    await newProduct.save();
+
+    // Send response
+    res.status(201).json({
+      success: true,
+      message: 'Product created successfully',
+      product: newProduct
+    });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error creating product'
     });
   }
-
-  // Create slug from title
-  const slug = slugify(title, { lower: true, strict: true });
-
-  // Create the product data
-  const newProduct = new Product({
-    title,
-    slug,
-    description,
-    shortDescription,
-    category,
-    specifications: safeJSONParse(specifications, {}),
-    benefits: safeJSONParse(features, []),
-    certifications: safeJSONParse(certificationsData, []),
-    videoUrl: videoUrl || '',
-    datasheetUrl: datasheetUrl || '',
-    packaging: [],
-    faqs: [],
-    related: [],
-    images: req.files ? req.files.map(file => `/uploads/products/${file.filename}`) : []
-  });
-
-  // Save the product
-  await newProduct.save();
-
-  // Send response
-  res.status(201).json({
-    message: 'Product created successfully',
-    product: newProduct
-  });
 }));
 
 // Update product
-router.put('/:id', upload.array('images', 5), asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  console.log(`Updating product ${id}`);
-  
-  const existingProduct = await Product.findById(id);
-  if (!existingProduct) {
-    return res.status(404).json({ error: 'Product not found' });
+router.put('/:id', upload.fields([
+  { name: 'images', maxCount: 4 },
+  { name: 'certificateFile_0', maxCount: 1 }
+]), asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`Updating product ${id}`, req.body);
+    
+    const existingProduct = await Product.findById(id);
+    if (!existingProduct) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Product not found' 
+      });
+    }
+
+    // Process certificates
+    const certifications = safeJSONParse(req.body.certificationsData, []);
+    const processedCertifications = [];
+    
+    if (certifications && certifications.length > 0) {
+      for (const cert of certifications) {
+        if (req.files[`certificateFile_${cert.index}`]?.[0]) {
+          // New certificate file
+          processedCertifications.push({
+            ...cert,
+            url: req.files[`certificateFile_${cert.index}`][0].path
+          });
+        } else if (cert.url) {
+          // Existing certificate without new file
+          processedCertifications.push(cert);
+        }
+      }
+    }
+
+    const updateData = {
+      ...req.body,
+      specifications: safeJSONParse(req.body.specifications, {}),
+      benefits: safeJSONParse(req.body.features, []),
+      certifications: processedCertifications
+    };
+
+    // Handle product images
+    if (req.files.images && req.files.images.length > 0) {
+      // Delete old images from Cloudinary
+      if (existingProduct.images && existingProduct.images.length > 0) {
+        for (const imageUrl of existingProduct.images) {
+          if (imageUrl.includes('cloudinary')) {
+            try {
+              const publicId = imageUrl.split('/').pop().split('.')[0];
+              await cloudinary.uploader.destroy(publicId);
+            } catch (error) {
+              console.error('Error deleting old image:', error);
+            }
+          }
+        }
+      }
+      // Add new Cloudinary URLs
+      updateData.images = req.files.images.map(file => file.path);
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id, 
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true, 
+      message: 'Product updated successfully', 
+      product: updatedProduct 
+    });
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error updating product'
+    });
   }
-
-  const updateData = {
-    ...req.body,
-    specifications: safeJSONParse(req.body.specifications, {}),
-    benefits: safeJSONParse(req.body.features, []),
-    certifications: safeJSONParse(req.body.certificationsData, [])
-  };
-
-  if (req.files && req.files.length > 0) {
-    updateData.images = req.files.map(file => `/uploads/products/${file.filename}`);
-  }
-
-  const updatedProduct = await Product.findByIdAndUpdate(
-    id, 
-    updateData,
-    { new: true, runValidators: true }
-  );
-
-  res.json({ 
-    message: 'Product updated successfully', 
-    product: updatedProduct 
-  });
 }));
 
 // Delete product
 router.delete('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  console.log(`Deleting product ${id}`);
-
   try {
+    const { id } = req.params;
+    console.log(`Deleting product ${id}`);
+
     const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
+      return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    // Delete associated images
+    // Delete associated images from Cloudinary
     if (product.images && product.images.length > 0) {
-      for (const imagePath of product.images) {
-        const fullPath = path.join(__dirname, '..', 'uploads', 'products', path.basename(imagePath));
-        if (fs.existsSync(fullPath)) {
-          fs.unlinkSync(fullPath);
+      for (const imageUrl of product.images) {
+        if (imageUrl.includes('cloudinary')) {
+          try {
+            const publicId = imageUrl.split('/').pop().split('.')[0];
+            await cloudinary.uploader.destroy(publicId);
+          } catch (cloudinaryError) {
+            console.error('Error deleting image from Cloudinary:', cloudinaryError);
+          }
         }
       }
     }
@@ -252,9 +342,11 @@ router.delete('/:id', asyncHandler(async (req, res) => {
     res.json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error deleting product:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error deleting product'
+    });
   }
-}));
 }));
 
 module.exports = router;

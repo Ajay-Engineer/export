@@ -8,7 +8,6 @@ const productSchema = new mongoose.Schema({
   },
   slug: {
     type: String,
-    required: [true, 'Slug is required'],
     unique: true,
     trim: true,
     lowercase: true
@@ -39,6 +38,24 @@ const productSchema = new mongoose.Schema({
   images: [{
     type: String,
     required: true
+  }],
+  certifications: [{
+    alt: {
+      type: String,
+      required: true
+    },
+    url: {
+      type: String,
+      required: false
+    },
+    index: {
+      type: Number,
+      required: true
+    },
+    isNew: {
+      type: Boolean,
+      default: false
+    }
   }],
   benefits: [{
     title: {
@@ -73,35 +90,35 @@ const productSchema = new mongoose.Schema({
   certifications: [{
     src: {
       type: String,
-      required: true
+      
     },
     alt: {
       type: String,
-      required: true
+  
     }
   }],
   faqs: [{
     q: {
       type: String,
-      required: true
+      
     },
     a: {
       type: String,
-      required: true
+      
     }
   }],
   related: [{
     title: {
       type: String,
-      required: true
+      
     },
     image: {
       type: String,
-      required: true
+      
     },
     link: {
       type: String,
-      required: true
+      
     }
   }]
 }, {

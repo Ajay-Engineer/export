@@ -21,14 +21,14 @@ const AdminCertificate = () => {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
       const data = await res.json();
-      if (!Array.isArray(data)) {
+      if (!data.success || !Array.isArray(data.certificates)) {
         throw new Error('Invalid response format');
       }
-      setCertificates(data);
+      setCertificates(data.certificates);
     } catch (error) {
       console.error('Error fetching certificates:', error);
       setCertificates([]);
-      alert('Failed to load certificates. Please try refreshing the page.');
+      setError('Failed to load certificates. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -91,13 +91,16 @@ const AdminCertificate = () => {
         credentials: 'include'
       });
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || 'Failed to save certificate');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save certificate');
       }
       
+      // Reset form and refresh certificates
       setForm({ title: '', image: null });
       setEditingId(null);
+      await fetchCertificates(); // Refresh the list
       await fetchCertificates();
     } catch (error) {
       console.error('Error saving certificate:', error);
@@ -111,20 +114,27 @@ const AdminCertificate = () => {
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this certificate?')) {
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/delete/${id}`, { 
         method: 'DELETE',
         credentials: 'include'
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to delete certificate');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to delete certificate');
       }
       
-      fetchCertificates();
+      await fetchCertificates(); // Refresh the list
+      setError(''); // Clear any existing errors
     } catch (error) {
       console.error('Error deleting certificate:', error);
-      alert('Failed to delete certificate. Please try again.');
+      setError('Failed to delete certificate. Please try again.');
     }
   };
 
@@ -178,13 +188,12 @@ const AdminCertificate = () => {
                 {cert.image && (
                   <div className="aspect-w-3 aspect-h-2 mb-4">
                     <img
-                      src={cert.image ? `http://localhost:3001${cert.image}` : 'https://via.placeholder.com/300?text=No+Image'}
+                      src={cert.image || '/placeholder-certificate.png'}
                       alt={cert.title}
                       className="w-full h-48 object-contain rounded bg-gray-50"
                       onError={(e) => {
                         console.error('Image load error for:', cert.image);
-                        // Don't use via.placeholder.com as it seems to be unreachable
-                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';
+                        e.target.src = '/placeholder-certificate.png';
                       }}
                     />
                   </div>

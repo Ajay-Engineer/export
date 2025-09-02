@@ -56,10 +56,23 @@ const ProductCreateForm = ({ onSubmit }) => {
     const fetchProducts = async () => {
       try {
         const response = await axiosInstance.get('/products');
-        setProducts(response.data);
+        console.log('Products response:', response.data);
+        
+        // Handle different response formats
+        let productsArray = [];
+        if (Array.isArray(response.data)) {
+          productsArray = response.data;
+        } else if (response.data.products && Array.isArray(response.data.products)) {
+          productsArray = response.data.products;
+        } else if (response.data.success && Array.isArray(response.data.products)) {
+          productsArray = response.data.products;
+        }
+        
+        setProducts(productsArray);
       } catch (error) {
         console.error('Error fetching products:', error);
         alert('Error fetching products. Please try again.');
+        setProducts([]);
       }
     };
     fetchProducts();
@@ -90,6 +103,12 @@ const ProductCreateForm = ({ onSubmit }) => {
 
   const handleImageChange = (index, file) => {
     setImageFiles(prev => {
+      const filteredFiles = prev.filter(f => f !== undefined);
+      if (filteredFiles.length >= 4 && file) {
+        alert('Maximum 4 images allowed');
+        return prev;
+      }
+
       const newFiles = [...prev];
       // If there's an existing file at this index and it's a File object,
       // revoke its object URL to prevent memory leaks
@@ -102,6 +121,10 @@ const ProductCreateForm = ({ onSubmit }) => {
   };
 
   const addImageField = () => {
+    if (imageFiles.filter(f => f !== undefined).length >= 4) {
+      alert('Maximum 4 images allowed');
+      return;
+    }
     setImageFiles((prev) => [...prev, undefined]);
   };
 
@@ -178,11 +201,11 @@ const ProductCreateForm = ({ onSubmit }) => {
       // Handle certificate uploads
       const certificationsData = [];
       formData.certifications.forEach((cert, index) => {
-        if (cert.file instanceof File) {
+        if (cert.file instanceof File && cert.alt) { // Only append if we have both file and alt text
           // This is a new file upload
           formDataToSend.append(`certificateFile_${index}`, cert.file);
           certificationsData.push({
-            alt: cert.alt,
+            alt: cert.alt || 'Certificate',
             index: index,
             isNew: true
           });
@@ -214,43 +237,114 @@ const ProductCreateForm = ({ onSubmit }) => {
 
       let result;
       if (editId) {
-        result = await axiosInstance.put(`/products/${editId}`, formDataToSend, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        // Handle update
+        console.log('Updating product with ID:', editId);
         
-        // Update form with response data
-        if (result.data.product) {
-          // Update product images with new paths
-          if (result.data.product.images) {
-            setImageFiles(result.data.product.images);
+        // Handle existing and new images
+        const existingImages = [];
+        const newImages = [];
+        
+        imageFiles.forEach(file => {
+          if (typeof file === 'string' && file.includes('cloudinary')) {
+            existingImages.push(file);
+          } else if (file instanceof File) {
+            newImages.push(file);
           }
-          
-          // Update certifications with new paths
-          if (result.data.product.certifications) {
-            setFormData(prev => ({
-              ...prev,
-              certifications: result.data.product.certifications.map(cert => ({
-                ...cert,
-                file: null
-              }))
-            }));
+        });
+
+        // Append existing images
+        formDataToSend.append('existingImages', JSON.stringify(existingImages));
+        
+        // Append new images
+        newImages.forEach(file => {
+          formDataToSend.append('images', file);
+        });
+
+        // Handle certificates
+        const certificationsData = formData.certifications.map((cert, index) => {
+          if (cert.file instanceof File) {
+            // New certificate file
+            formDataToSend.append(`certificateFile_${index}`, cert.file);
+            return {
+              alt: cert.alt,
+              index,
+              isNew: true
+            };
+          } else {
+            // Existing certificate
+            return {
+              alt: cert.alt,
+              url: cert.url,
+              index,
+              isNew: false
+            };
+          }
+        });
+
+        formDataToSend.append('certificationsData', JSON.stringify(certificationsData));
+
+        // Log the form data before sending
+        console.log('Update form data:');
+        for (let [key, value] of formDataToSend.entries()) {
+          if (value instanceof File) {
+            console.log(`${key}: File - ${value.name}`);
+          } else {
+            console.log(`${key}:`, value);
           }
         }
-        alert("Product updated successfully!");
+
+        try {
+          result = await axiosInstance.put(`/products/${editId}`, formDataToSend, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          
+          if (result.data.success) {
+            const updatedProduct = result.data.product;
+            console.log('Updated product:', updatedProduct);
+            
+            // Update products list with new data
+            setProducts(prevProducts => 
+              prevProducts.map(p => p._id === editId ? updatedProduct : p)
+            );
+            
+            alert("Product updated successfully!");
+          } else {
+            throw new Error(result.data.error || 'Failed to update product');
+          }
+        } catch (error) {
+          console.error('Error updating product:', error);
+          throw new Error(error.response?.data?.error || error.message || 'Failed to update product');
+        }
       } else {
+        // Handle create
         result = await axiosInstance.post('/products', formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        console.log('Server response:', result.data);
+        
+        if (result.data.success) {
+          console.log('Server response:', result.data);
+          alert("Product created successfully!");
+        } else {
+          throw new Error(result.data.error || 'Failed to create product');
+        }
       }
 
+      // Reset form
       setFormData(initialForm);
       setImageFiles([undefined]);
       setEditId(null);
       
-      // Refresh product list
-      const productsResponse = await axiosInstance.get('/products');
-      setProducts(productsResponse.data);
+      // Refresh product list without causing a page reload
+      try {
+        const productsResponse = await axiosInstance.get('/products');
+        if (productsResponse.data.products && Array.isArray(productsResponse.data.products)) {
+          setProducts(productsResponse.data.products);
+        } else if (Array.isArray(productsResponse.data)) {
+          setProducts(productsResponse.data);
+        }
+      } catch (error) {
+        console.error('Error refreshing products:', error);
+      }
       
     } catch (err) {
       console.error('Error submitting form:', err);
@@ -306,21 +400,43 @@ const ProductCreateForm = ({ onSubmit }) => {
   // Edit product: pre-fill form
   const handleEdit = async (prod) => {
     try {
-      const response = await axiosInstance.get(`/products/${prod._id}`);
-      const productData = response.data;
+      console.log('Editing product:', prod);
+      
+      // Create formatted data with all necessary fields
       const formattedData = {
-        ...productData,
-        images: undefined // Remove images from form data as we handle it separately
+        title: prod.title || '',
+        slug: prod.slug || '',
+        category: prod.category || '',
+        shortDescription: prod.shortDescription || '',
+        description: prod.description || '',
+        videoUrl: prod.videoUrl || '',
+        datasheetUrl: prod.datasheetUrl || '',
+        benefits: Array.isArray(prod.benefits) ? prod.benefits : [],
+        specifications: prod.specifications || initialForm.specifications,
+        packaging: Array.isArray(prod.packaging) ? prod.packaging : [],
+        certifications: Array.isArray(prod.certifications) 
+          ? prod.certifications.map(cert => ({
+              alt: cert.alt || '',
+              src: cert.url || '',
+              file: undefined,
+              url: cert.url || ''  // Preserve the original URL
+            }))
+          : [],
+        faqs: Array.isArray(prod.faqs) ? prod.faqs : [],
+        related: Array.isArray(prod.related) ? prod.related : [],
       };
 
-      // Set existing images in the imageFiles state
-      if (productData.images && productData.images.length > 0) {
-        setImageFiles(productData.images);
+      console.log('Formatted data:', formattedData);
+
+      // Handle existing images
+      if (prod.images && Array.isArray(prod.images)) {
+        const existingImages = prod.images.map(img => typeof img === 'string' ? img : undefined);
+        setImageFiles(existingImages.length > 0 ? existingImages : [undefined]);
       } else {
-        setImageFiles([null]);
+        setImageFiles([undefined]);
       }
 
-      // Set the form data
+      // Set form data and edit ID
       setFormData(formattedData);
       setEditId(prod._id);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -486,8 +602,14 @@ const ProductCreateForm = ({ onSubmit }) => {
                                 src={file} 
                                 alt="Existing" 
                                 className="h-24 object-contain mr-2"
+                                onError={(e) => {
+                                  console.error('Image load error:', e);
+                                  e.target.src = 'placeholder.jpg';
+                                }}
                               />
-                              <span className="text-sm text-gray-600">Current image</span>
+                              <span className="text-sm text-gray-600">
+                                {typeof file === 'string' ? 'Current image (click to change)' : 'Click to upload'}
+                              </span>
                             </>
                           )}
                         </div>
@@ -745,7 +867,7 @@ const ProductCreateForm = ({ onSubmit }) => {
       <div className="max-w-4xl mx-auto mt-10 px-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-2xl font-bold text-gray-800">All Products</h3>
-          <div className="text-sm text-gray-500">{products.length} products</div>
+          <div className="text-sm text-gray-500">{Array.isArray(products) ? products.length : 0} products</div>
         </div>
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
@@ -764,7 +886,7 @@ const ProductCreateForm = ({ onSubmit }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {products.map((prod) => (
+                {Array.isArray(products) && products.map((prod) => (
                   <tr key={prod._id} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{prod.title}</div>
@@ -792,7 +914,7 @@ const ProductCreateForm = ({ onSubmit }) => {
                     </td>
                   </tr>
                 ))}
-                {products.length === 0 && (
+                {(!Array.isArray(products) || products.length === 0) && (
                   <tr>
                     <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
                       No products found
