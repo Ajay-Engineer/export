@@ -1,4 +1,5 @@
 import { Mail, MapPin, Phone } from "lucide-react";
+import React from "react";
 import {
   FaLeaf,
   FaCube,
@@ -63,7 +64,7 @@ export default function Footer() {
               <Link to="/about" className="hover:text-blue-400 transition cursor-pointer">・About Us</Link>
             </li>
             <li className="hover:text-blue-400 transition">
-            ・Terms &amp; Conditions
+             <Link to="/terms" className="hover:text-blue-400 transition cursor-pointer">・Terms &amp; Conditions</Link>
             </li>
             <li>
               <Link

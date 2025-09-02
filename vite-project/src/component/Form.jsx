@@ -105,7 +105,18 @@ export default function App() {
           type: 'success',
         });
         // Reset form fields
-        setFormData(Object.fromEntries(Object.keys(formData).map(k => [k, ''])));
+        setFormData({
+          organization: '',
+          name: '',
+          designation: '',
+          product: '',
+          variant: '',
+          email: '',
+          mobile: '',
+          country: '',
+          quantity: '',
+          time: '',
+        });
       },
       err => {
         console.error('EmailJS send error:', err);

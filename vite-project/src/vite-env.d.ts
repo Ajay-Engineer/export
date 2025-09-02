@@ -8,3 +8,11 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare global {
+  interface Window {
+    emailjs: {
+      send: (serviceId: string, templateId: string, data: any, publicKey: string) => Promise<any>;
+    };
+  }
+}

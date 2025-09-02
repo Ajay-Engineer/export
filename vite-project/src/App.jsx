@@ -1,9 +1,11 @@
 
 import { Routes, Route } from "react-router-dom";
 import Header from "./component/Header";
+import React from "react";
 import Footer from "./component/Footer";
 import ContactForm from "./component/Form.jsx";
 import PaymentTerms from "./component/PaymentTerms.jsx";
+import TermsAndConditions from "./component/TermsAndConditions.jsx";
 import LandingPage from "./component/LandingPage";
 import ProductAdmin from "./pages/ProductAdmin";
 import ProductsPage from "./component/ProductsPage";
@@ -51,6 +53,7 @@ function App() {
             <Route path="/about" element={<AboutSection />} />
             <Route path="/contact" element={<ContactForm />} />
             <Route path="/Payment" element={<PaymentTerms />} />
+            <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/brand" element={<Brand />} />
             {/* Product Routes */}
             <Route path="/products" element={<ProductsPage />} />

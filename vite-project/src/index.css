@@ -1,38 +1,37 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
+@theme {
+  --color-primary-navy: #1e293b;
+  --color-primary-navy-light: #334155;
+  --color-primary-navy-dark: #0f172a;
+  --color-accent-gold: #d4af37;
+  --color-accent-gold-light: #f1c40f;
+  --color-accent-gold-dark: #b8860b;
+  --color-neutral-gray: #64748b;
+  --color-neutral-gray-light: #94a3b8;
+  --color-neutral-gray-dark: #475569;
+  --color-success-green: #059669;
+  --color-warning-orange: #d97706;
+  --color-error-red: #dc2626;
+  --color-background-light: #f8fafc;
+  --color-background-white: #ffffff;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-border-light: #e2e8f0;
+  --color-border-medium: #cbd5e1;
+}
+
 :root {
-  /* Professional Color Palette */
-  --primary-navy: #1e293b;
-  --primary-navy-light: #334155;
-  --primary-navy-dark: #0f172a;
-  --accent-gold: #d4af37;
-  --accent-gold-light: #f1c40f;
-  --accent-gold-dark: #b8860b;
-  --neutral-gray: #64748b;
-  --neutral-gray-light: #94a3b8;
-  --neutral-gray-dark: #475569;
-  --success-green: #059669;
-  --warning-orange: #d97706;
-  --error-red: #dc2626;
-  --background-light: #f8fafc;
-  --background-white: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
   --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-heavy: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --border-light: #e2e8f0;
-  --border-medium: #cbd5e1;
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply bg-background-light text-text-primary;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -52,7 +51,7 @@
     @apply border-2 border-primary-navy text-primary-navy hover:bg-primary-navy hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300;
   }
   .card-professional {
-    @apply bg-white rounded-xl shadow-medium border border-border-light p-6 hover:shadow-heavy transition-all duration-300;
+    @apply bg-white rounded-xl shadow-md border border-slate-200 p-6 hover:shadow-lg transition-all duration-300;
   }
   .trust-badge {
     @apply bg-success-green text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
@@ -155,14 +154,14 @@
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--background-light);
+  background: var(--color-background-light);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--neutral-gray);
+  background: var(--color-neutral-gray);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--neutral-gray-dark);
+  background: var(--color-neutral-gray-dark);
 }
 
 /* hide scrollbar but keep scroll functionality */
