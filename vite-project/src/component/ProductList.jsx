@@ -16,8 +16,8 @@ const ProductList = ({ category, title, description }) => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(`http://localhost:3001/api/products/category/${category}`);
-        if (response.data && Array.isArray(response.data)) {
-          setProducts(response.data);
+        if (response.data && Array.isArray(response.data.products)) {
+          setProducts(response.data.products);
         } else {
           setError('Invalid data received from server');
         }
@@ -42,9 +42,11 @@ const ProductList = ({ category, title, description }) => {
           >
             ← Back to Products
           </button>
+
           <ProductDetailPage
             {...selected}
             mainImage={selected.images?.[0]}
+            certifications={selected.certifications || []}
             onBack={() => setSelected(null)}
           />
         </div>

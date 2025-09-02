@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Download, Mail, CheckCircle } from "lucide-react";
+import axios from 'axios';
+
 
 const NAV = [
   { id: "about", label: "About" },
@@ -15,6 +17,70 @@ const fadeIn = {
   visible: { opacity: 1, y: 0 },
 };
 
+function CertificateImage({ certId, certTitle, fallbackImage }) {
+  const [certData, setCertData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCertificate = async () => {
+      try {
+        setIsLoading(true);
+        if (certId) {
+          const response = await axios.get(`http://localhost:3001/api/certificates/${certId}`);
+          if (response.data) {
+            setCertData(response.data);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching certificate:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCertificate();
+  }, [certId]);
+
+  if (isLoading) {
+    return (
+      <div className="h-48 w-48 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <span className="text-gray-400">Loading...</span>
+      </div>
+    );
+  }
+
+  const imgSrc = certData && certData.image ? certData.image : fallbackImage;
+
+  if (!imgSrc) {
+    return null;
+  }
+
+  return (
+    <div className="relative group bg-white rounded-lg shadow-lg p-4 hover:shadow-xl transition-all duration-300">
+      <img
+        src={imgSrc}
+        alt={`${certTitle} Certificate`}
+        className="w-full h-64 object-contain rounded-lg transition-transform duration-300 group-hover:scale-105"
+        onError={(e) => {
+          console.error('Certificate image load error:', {
+            certId,
+            url: imgSrc
+          });
+          if (e.target instanceof HTMLImageElement) {
+            e.target.src = 'https://res.cloudinary.com/dxixoivs7/image/upload/v1/placeholder-certificate.png';
+          }
+        }}
+        loading="lazy"
+      />
+      <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
+        <p className="text-white text-center font-medium p-4">
+          {certTitle}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function ProductDetailPage({
   title,
   images = [],
@@ -28,14 +94,41 @@ export default function ProductDetailPage({
   datasheetUrl,
 }) {
   const [active, setActive] = useState(NAV[0].id);
+  
+  useEffect(() => {
+    // Debug log to check certifications data
+    console.log('Certifications received:', certifications);
+  }, [certifications]);
 
   // Convert backend-relative image paths to absolute URLs when needed
   const formatImageUrl = (img) => {
-    if (!img) return null;
-    if (typeof img !== 'string') return img;
-    if (img.startsWith('http')) return img;
+    if (!img) {
+      console.debug('No image URL provided');
+      return 'https://res.cloudinary.com/dxixoivs7/image/upload/v1/placeholder-certificate.png';
+    }
 
-    const baseUrl = import.meta.env.MODE === 'production'
+    if (typeof img !== 'string') {
+      console.debug('Non-string image value:', img);
+      return img;
+    }
+    
+    console.debug('Processing image URL:', img);
+    
+    // If it's already a full Cloudinary URL, return as is
+    if (img.startsWith('http')) {
+      console.debug('Using full URL:', img);
+      return img;
+    }
+    
+    // Check if it's a Cloudinary public_id
+    if (img.startsWith('certificates/') || img.includes('/certificates/')) {
+      const cloudinaryUrl = `https://res.cloudinary.com/dxixoivs7/image/upload/${img.replace(/^\/+/, '')}`;
+      console.debug('Generated Cloudinary URL:', cloudinaryUrl);
+      return cloudinaryUrl;
+    }
+
+    // For legacy/local URLs
+    const baseUrl = process.env.NODE_ENV === 'production'
       ? 'https://rebecca-exim-api.herokuapp.com'
       : 'http://localhost:3001';
 
@@ -167,83 +260,33 @@ export default function ProductDetailPage({
         </div>
       </motion.section>
 
-      {/* Specs */}
+      {/* Certifications Section */}
       <motion.section
-        id="specs"
+        id="certs"
         className="w-full bg-white py-12 px-0"
         variants={fadeIn}
         initial="hidden"
         whileInView="visible"
       >
         <div className="max-w-[1440px] mx-auto px-6">
-          <h2 className="text-2xl font-semibold mb-6">Product Specifications</h2>
-          <table className="w-full table-auto border border-gray-300 rounded-lg overflow-hidden">
-            <tbody>
-              {Object.entries(specifications).map(([label, val], idx) => (
-                <tr
-                  key={label}
-                  className={idx % 2 === 0 ? "bg-[#f8f9fb]" : "bg-white"}
-                >
-                  <th className="text-left px-4 py-3 font-medium border-r border-gray-200 bg-[#f2f4f8] text-gray-800">
-                    {label}
-                  </th>
-                  <td className="px-4 py-3 text-gray-900">{val}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </motion.section>
+          <h2 className="text-2xl font-semibold mb-6 text-center">Certifications</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {certifications.map((cert, i) => {
+              const certTitle = cert.title || cert.name || "Certificate";
+              const imageUrl = cert.image || formatImageUrl(cert.image);
 
-      {/* Packaging */}
-      <motion.section
-        id="pack"
-        className="w-full bg-[#f9fafa] py-12 px-0"
-        variants={fadeIn}
-        initial="hidden"
-        whileInView="visible"
-      >
-        <div className="max-w-[1440px] mx-auto px-6">
-          <h2 className="text-2xl font-semibold mb-6">Packaging Standards</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {packaging.map((pkg, i) => (
-              <div
-                key={i}
-                className="p-6 bg-white rounded-lg shadow hover:shadow-md transition"
-              >
-                <h4 className="font-semibold mb-2">{pkg.title}</h4>
-                <p className="text-gray-700">{pkg.content}</p>
-              </div>
-            ))}
+              return (
+                <CertificateImage
+                  key={cert._id || i}
+                  certId={cert._id}
+                  certTitle={certTitle}
+                  fallbackImage={imageUrl}
+                />
+              );
+            })}
           </div>
         </div>
       </motion.section>
-
-      {/* Certifications */}
-      {certifications.length > 0 && (
-        <motion.section
-          id="certs"
-          className="w-full bg-white py-12 px-0"
-          variants={fadeIn}
-          initial="hidden"
-          whileInView="visible"
-        >
-          <div className="max-w-[1440px] mx-auto px-6">
-            <h2 className="text-2xl font-semibold mb-6">Certifications</h2>
-            <div className="flex gap-6 overflow-x-auto snap-x pb-4">
-              {certifications.map((c, i) => (
-                <div key={i} className="snap-center flex-shrink-0">
-                  <img
-                    src={c.src}
-                    alt={c.alt}
-                    className="h-16 object-contain"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.section>
-      )}
 
       {/* Contact CTA */}
       <section

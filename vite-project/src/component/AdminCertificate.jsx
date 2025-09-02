@@ -20,11 +20,11 @@ const AdminCertificate = () => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-      const data = await res.json();
-      if (!data.success || !Array.isArray(data.certificates)) {
+      const { success, data } = await res.json();
+      if (!success || !Array.isArray(data)) {
         throw new Error('Invalid response format');
       }
-      setCertificates(data.certificates);
+      setCertificates(data);
     } catch (error) {
       console.error('Error fetching certificates:', error);
       setCertificates([]);
@@ -109,7 +109,7 @@ const AdminCertificate = () => {
   };
 
   const handleEdit = (cert) => {
-    setForm({ title: cert.title, description: cert.description, image: null });
+    setForm({ title: cert.title, image: null });
     setEditingId(cert._id);
   };
 
@@ -175,7 +175,7 @@ const AdminCertificate = () => {
           {editingId ? 'Update' : 'Add'} Certificate
         </button>
         {editingId && (
-          <button type="button" onClick={() => { setEditingId(null); setForm({ title: '', description: '', image: null }); }} className="ml-2 px-4 py-2 rounded bg-gray-400 text-white">Cancel</button>
+          <button type="button" onClick={() => { setEditingId(null); setForm({ title: '', image: null }); }} className="ml-2 px-4 py-2 rounded bg-gray-400 text-white">Cancel</button>
         )}
       </form>
       <div>
@@ -193,7 +193,7 @@ const AdminCertificate = () => {
                       className="w-full h-48 object-contain rounded bg-gray-50"
                       onError={(e) => {
                         console.error('Image load error for:', cert.image);
-                        e.target.src = '/placeholder-certificate.png';
+                        (e.target instanceof HTMLImageElement) && (e.target.src = '/placeholder-certificate.png');
                       }}
                     />
                   </div>

@@ -1,6 +1,7 @@
-
+import react from 'react';
 import { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
 
 const CertificatesSection = () => {
   const scrollRef = useRef(null);
@@ -14,8 +15,8 @@ const CertificatesSection = () => {
         if (!response.ok) throw new Error('Failed to fetch certificates');
         const data = await response.json();
         
-        if (data.success && Array.isArray(data.certificates)) {
-          setCertificates(data.certificates);
+        if (data.success && Array.isArray(data.data)) {
+          setCertificates(data.data);
         } else {
           console.error('Invalid data format:', data);
           setCertificates([]);
@@ -84,8 +85,11 @@ const CertificatesSection = () => {
                   className="w-full h-[300px] object-contain rounded-t-lg"
                   onError={(e) => {
                     console.error('Image load error:', certificate.image);
-                    e.target.src = '/placeholder-certificate.png';
-                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';
+                    const img = e.target instanceof HTMLImageElement ? e.target : null;
+                    if (img) {
+                      img.src = '/placeholder-certificate.png';
+                      img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';
+                    }
                   }}
                 />
                 {certificate.title && (

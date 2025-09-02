@@ -23,11 +23,12 @@ const AdminTestimonials = () => {
     try {
       const response = await fetch('/api/testimonials');
       if (!response.ok) throw new Error('Failed to fetch testimonials');
-      const data = await response.json();
-      setTestimonials(data);
+      const { data } = await response.json();
+      setTestimonials(data || []);
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to fetch testimonials');
+      setTestimonials([]); // Set empty array on error
     }
   };
 
@@ -100,7 +101,11 @@ const AdminTestimonials = () => {
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result);
+        if (typeof reader.result === 'string') {
+          setImagePreview(reader.result);
+        } else {
+          setImagePreview('');
+        }
       };
       reader.readAsDataURL(file);
     }

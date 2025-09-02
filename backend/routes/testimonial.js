@@ -7,6 +7,11 @@ const jwt = require('jsonwebtoken');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
+// Helper function to handle async routes
+const asyncHandler = (fn) => (req, res, next) => {
+  return Promise.resolve(fn(req, res, next)).catch(next);
+};
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -70,14 +75,13 @@ router.post('/login', async (req, res) => {
 });
 
 // Get all testimonials
-router.get('/', async (req, res) => {
-  try {
-    const testimonials = await Testimonial.find().sort({ createdAt: -1 });
-    res.json(testimonials);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const testimonials = await Testimonial.find().sort({ createdAt: -1 });
+  res.json({
+    success: true,
+    data: testimonials
+  });
+}));
 
 // Create new testimonial (admin only)
 router.post('/', verifyToken, upload.single('image'), async (req, res) => {

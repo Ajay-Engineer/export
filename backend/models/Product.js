@@ -17,6 +17,12 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Category is required'],
     enum: ['herbal', 'palm-jaggery', 'coir', 'tea', 'health-mix', 'handicraft', 'egg']
   },
+  visibility: {
+    type: String,
+    default: 'public',
+    enum: ['public', 'tea-only'],
+    required: true
+  },
   shortDescription: {
     type: String,
     required: [true, 'Short description is required'],

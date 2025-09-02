@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from 'prop-types';
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../axios/axios.config";
+import axios from 'axios';
+
 const categories = [
   { name: "Herbal Extract Products", value: "herbal" },
   { name: "Palm Jaggery Products", value: "palm-jaggery" },
@@ -11,6 +14,7 @@ const categories = [
   { name: "Egg Products", value: "egg" },
 ];
 
+/** @type {React.FC<{ label: string }>} */
 const RequiredLabel = ({ label }) => (
   <label className="block font-medium mb-1">
     {label} <span className="text-red-600">*</span>
@@ -21,6 +25,7 @@ const initialForm = {
   title: "",
   slug: "",
   category: "",
+  visibility: "public",
   shortDescription: "",
   description: "",
   videoUrl: "",
@@ -37,12 +42,17 @@ const initialForm = {
     MOQ: "",
   },
   packaging: [{ title: "", content: "" }],
-  certifications: [{ src: "", alt: "", file: undefined }],
+  certifications: [
+    { src: "", alt: "GST", file: undefined },
+    { src: "", alt: "FSSAI", file: undefined },
+    { src: "", alt: "Export License", file: undefined }
+  ],
   faqs: [{ q: "", a: "" }],
-  related: [{ title: "", image: "", link: "" }],
+  related: [{ title: "", image: "", link: "" }]
 };
 
-const ProductCreateForm = ({ isEdit = false, product = null, onSubmit, onClose }) => {
+/** @type {React.FC<{ isEdit?: boolean, product?: any, onSubmit?: Function, onClose?: Function }>} */
+const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, onClose }) {
   const [formData, setFormData] = useState(initialForm);
   const [imageFiles, setImageFiles] = useState([undefined]);
   const [products, setProducts] = useState([]);
@@ -64,7 +74,8 @@ const ProductCreateForm = ({ isEdit = false, product = null, onSubmit, onClose }
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axiosInstance.get('/products');
+        // Use the admin route to fetch all products
+        const response = await axiosInstance.get('/products/admin');
         console.log('Products response:', response.data);
         
         // Handle different response formats
@@ -190,251 +201,139 @@ const ProductCreateForm = ({ isEdit = false, product = null, onSubmit, onClose }
     }));
   };
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
+
+const uploadCertificate = async (file) => {
+    try {
+      console.log('Preparing to upload certificate:', file.name);
+      
+      // Validate file size before upload
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error(`File size exceeds 5MB limit. Please compress the image or choose a smaller file.`);
+      }
+
+      // Ensure file type is correct
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please upload an image file');
+      }
+
+      const certFormData = new FormData();
+      certFormData.append('file', file);
+      
+      // Upload to cloudinary through our backend
+      const response = await axiosInstance.post('/certificates/upload', certFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        timeout: 120000, // 2 minute timeout for larger files
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`Upload Progress: ${percentCompleted}%`);
+        }
+      });
+
+      if (!response.data.url) {
+        throw new Error('Upload successful but no URL returned');
+      }
+
+      console.log('Certificate uploaded successfully:', response.data);
+      return response.data.url;
+    } catch (error) {
+      console.error('Error uploading certificate:', error);
+      if (error.response?.status === 404) {
+        throw new Error('Certificate upload service is not available. Please contact support.');
+      } else if (error.response?.status === 413) {
+        throw new Error('File is too large. Please upload a smaller file.');
+      } else if (error.code === 'ECONNABORTED') {
+        throw new Error('Upload timed out. Please try again with a smaller file or better connection.');
+      }
+      throw new Error(`Failed to upload certificate: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
 const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+    setError(null);
+
     try {
-      // Create FormData instance
-      const formDataToSend = new FormData();
-      
-      // Log attempt to create product
-      console.log("Attempting to create product...");
-      // Log the entire form data for debugging
-      console.log("Full form data:", {
-        title: formData.title,
-        slug: formData.slug,
-        category: formData.category,
-        shortDescription: formData.shortDescription,
-        description: formData.description,
-      });
-
-      // Validate required fields are not empty
-      const requiredFields = [
-        "title",
-        "slug",
-        "category",
-        "shortDescription",
-        "description",
-      ];
-      const missingFields = requiredFields.filter((field) => !formData[field]);
-
+      // Validate required fields
+      const requiredFields = ['title', 'slug', 'category', 'shortDescription', 'description'];
+      const missingFields = requiredFields.filter(field => !formData[field]);
       if (missingFields.length > 0) {
-        throw new Error(
-          `Please fill in all required fields: ${missingFields.join(", ")}`
-        );
+        throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
       }
 
-      // Append all fields directly (not as nested object)
-      formDataToSend.append("title", formData.title || "");
-      formDataToSend.append("category", formData.category || "");
-      formDataToSend.append(
-        "shortDescription",
-        formData.shortDescription || ""
-      );
-      formDataToSend.append("description", formData.description || "");
+      // Create FormData
+      const formDataToSend = new FormData();
 
-      // Append additional fields
-      if (formData.specifications) {
-        formDataToSend.append(
-          "specifications",
-          JSON.stringify(formData.specifications)
-        );
-      }
-      if (formData.benefits) {
-        formDataToSend.append("features", JSON.stringify(formData.benefits));
-      }
-      if (formData.videoUrl) {
-        formDataToSend.append("videoUrl", formData.videoUrl);
-      }
-      if (formData.datasheetUrl) {
-        formDataToSend.append("datasheetUrl", formData.datasheetUrl);
-      }
-
-      // Handle certificate uploads
-      const certificationsData = [];
-      formData.certifications.forEach((cert, index) => {
-        if (cert.file instanceof File && cert.alt) { // Only append if we have both file and alt text
-          // This is a new file upload
-          formDataToSend.append(`certificateFile_${index}`, cert.file);
-          certificationsData.push({
-            alt: cert.alt || 'Certificate',
-            index: index,
-            isNew: true,
-          });
-        } else if (cert.src) {
-          // This is an existing certificate
-          certificationsData.push({
-            alt: cert.alt,
-            src: cert.src,
-            index: index,
-            isNew: false,
-          });
-        }
-      });
-
-      formDataToSend.append(
-        "certificationsData",
-        JSON.stringify(certificationsData)
-      );
-
-      // Append image files
-      imageFiles.forEach((file, index) => {
-        if (file instanceof File) {
-          // This is a new file upload
-          formDataToSend.append("images", file);
-        }
-      });
-
-      // Log the final FormData content
-      for (let pair of formDataToSend.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
-
-      let result;
-      if (editId) {
-        // Handle update
-        console.log('Updating product with ID:', editId);
-        
-        // Handle existing and new images
-        const existingImages = [];
-        const newImages = [];
-        
-        imageFiles.forEach(file => {
-          if (typeof file === 'string' && file.includes('cloudinary')) {
-            existingImages.push(file);
-          } else if (file instanceof File) {
-            newImages.push(file);
-          }
-        });
-
-        // Append existing images
-        formDataToSend.append('existingImages', JSON.stringify(existingImages));
-        
-        // Append new images
-        newImages.forEach(file => {
-          formDataToSend.append('images', file);
-        });
-
-        // Handle certificates
-        const certificationsData = formData.certifications.map((cert, index) => {
+      // Handle certificates first
+      const processedCerts = [];
+      if (formData.certifications && Array.isArray(formData.certifications)) {
+        for (const cert of formData.certifications) {
           if (cert.file instanceof File) {
-            // New certificate file
-            formDataToSend.append(`certificateFile_${index}`, cert.file);
-            return {
+            const url = await uploadCertificate(cert.file);
+            processedCerts.push({
               alt: cert.alt,
-              index,
-              isNew: true
-            };
-          } else {
-            // Existing certificate
-            return {
+              src: url
+            });
+          } else if (cert.src) {
+            processedCerts.push({
               alt: cert.alt,
-              url: cert.url,
-              index,
-              isNew: false
-            };
-          }
-        });
-
-        formDataToSend.append('certificationsData', JSON.stringify(certificationsData));
-
-        // Log the form data before sending
-        console.log('Update form data:');
-        for (let [key, value] of formDataToSend.entries()) {
-          if (value instanceof File) {
-            console.log(`${key}: File - ${value.name}`);
-          } else {
-            console.log(`${key}:`, value);
+              src: cert.src
+            });
           }
         }
+      }
 
-        try {
-          result = await axiosInstance.put(`/products/${editId}`, formDataToSend, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
-          
-          if (result.data.success) {
-            const updatedProduct = result.data.product;
-            console.log('Updated product:', updatedProduct);
-            
-            // Update products list with new data
-            setProducts(prevProducts => 
-              prevProducts.map(p => p._id === editId ? updatedProduct : p)
-            );
-            
-            alert("Product updated successfully!");
-          } else {
-            throw new Error(result.data.error || 'Failed to update product');
-          }
-        } catch (error) {
-          console.error('Error updating product:', error);
-          throw new Error(error.response?.data?.error || error.message || 'Failed to update product');
-        }
+      // Add certificates to form data
+      formDataToSend.append('certificates', JSON.stringify(processedCerts));
+
+      // Handle images
+      const existingImages = imageFiles.filter(file => 
+        typeof file === 'string' && file.includes('cloudinary')
+      );
+      const newImages = imageFiles.filter(file => file instanceof File);
+
+      formDataToSend.append('existingImages', JSON.stringify(existingImages));
+      newImages.forEach(file => {
+        formDataToSend.append('images', file);
+      });
+
+      // Add other fields
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('shortDescription', formData.shortDescription);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('specifications', JSON.stringify(formData.specifications));
+      formDataToSend.append('benefits', JSON.stringify(formData.benefits));
+      if (formData.videoUrl) formDataToSend.append('videoUrl', formData.videoUrl);
+      if (formData.datasheetUrl) formDataToSend.append('datasheetUrl', formData.datasheetUrl);
+
+      // Submit to server
+      const result = await axiosInstance[editId ? 'put' : 'post'](
+        editId ? `/products/${editId}` : '/products',
+        formDataToSend,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+
+      if (result.data.success) {
+        setProducts(prev => 
+          editId 
+            ? prev.map(p => p._id === editId ? result.data.product : p)
+            : [...prev, result.data.product]
+        );
+
+        setFormData(initialForm);
+        setImageFiles([undefined]);
+        setEditId(null);
+        alert(editId ? 'Product updated successfully!' : 'Product created successfully!');
       } else {
-        // Handle create
-        result = await axiosInstance.post('/products', formDataToSend, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        
-        if (result.data.success) {
-          console.log('Server response:', result.data);
-          alert("Product created successfully!");
-        } else {
-          throw new Error(result.data.error || 'Failed to create product');
-        }
+        throw new Error(result.data.error || 'Operation failed');
       }
-
-      // Reset form
-      setFormData(initialForm);
-      setImageFiles([undefined]);
-      setEditId(null);
-      
-      // Refresh product list without causing a page reload
-      try {
-        const productsResponse = await axiosInstance.get('/products');
-        if (productsResponse.data.products && Array.isArray(productsResponse.data.products)) {
-          setProducts(productsResponse.data.products);
-        } else if (Array.isArray(productsResponse.data)) {
-          setProducts(productsResponse.data);
-        }
-      } catch (error) {
-        console.error('Error refreshing products:', error);
-      }
-      
-    } catch (err) {
-      console.error("Error submitting form:", err);
-
-      // Log detailed information about the error
-      if (err.response) {
-        console.log("Response status:", err.response.status);
-        console.log("Response data:", err.response.data);
-        console.log("Response headers:", err.response.headers);
-      }
-
-      // Log form data for debugging
-      console.log("Form data structure:");
-      try {
-        for (let [key, value] of formDataToSend.entries()) {
-          if (value instanceof File) {
-            console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
-          } else if (typeof value === "string" && value.startsWith("{")) {
-            try {
-              console.log(`${key}:`, JSON.parse(value));
-            } catch {
-              console.log(`${key}:`, value);
-            }
-          } else {
-            console.log(`${key}:`, value);
-          }
-        }
-      } catch (error) {
-        console.log("Error logging form data:", error);
-      }
-
-      const errorMessage = err.response?.data?.error || err.message || "An unexpected error occurred";
-      setError(errorMessage);
-      alert(errorMessage);
+    } catch (error) {
+      console.error('Error in form submission:', error);
+      setError(error.response?.data?.message || error.message);
     } finally {
       setLoading(false);
     }
@@ -460,11 +359,10 @@ const handleSubmit = async (e) => {
         certifications: Array.isArray(prod.certifications) 
           ? prod.certifications.map(cert => ({
               alt: cert.alt || '',
-              src: cert.url || '',
-              file: undefined,
-              url: cert.url || ''  // Preserve the original URL
+              src: cert.src || cert.url || '', // Try both src and url fields
+              file: undefined
             }))
-          : [],
+          : initialForm.certifications,
         faqs: Array.isArray(prod.faqs) ? prod.faqs : [],
         related: Array.isArray(prod.related) ? prod.related : [],
       };
@@ -571,6 +469,20 @@ const handleSubmit = async (e) => {
           </div>
 
           <div className="mt-4">
+            <RequiredLabel label="Visibility" />
+            <select
+              name="visibility"
+              value={formData.visibility}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            >
+              <option value="public">Public - Visible to all</option>
+              <option value="tea-only">Tea Category Only</option>
+            </select>
+          </div>
+
+          <div className="mt-4">
             <RequiredLabel label="Short Description" />
             <input
               name="shortDescription"
@@ -626,10 +538,10 @@ const handleSubmit = async (e) => {
                   <input
                     type="file"
                     accept="image/*"
+                    name="images"
                     onChange={(e) => handleImageChange(index, e.target.files[0])}
                     className="hidden"
                     id={`image-input-${index}`}
-                    required={!file && !editId}
                   />
                   <label
                     htmlFor={`image-input-${index}`}
@@ -720,36 +632,51 @@ const handleSubmit = async (e) => {
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Certificate Image
+                      {cert.alt} Certificate
                     </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          const updatedCert = {
-                            ...formData.certifications[index],
-                            file: file,
-                            src: URL.createObjectURL(file), // Create preview URL
-                          };
-                          const updatedCerts = [...formData.certifications];
-                          updatedCerts[index] = updatedCert;
-                          setFormData((prev) => ({
-                            ...prev,
-                            certifications: updatedCerts,
-                          }));
-                        }
-                      }}
-                      className="hidden"
-                      id={`cert-input-${index}`}
-                    />
-                    <label
-                      htmlFor={`cert-input-${index}`}
-                      className="flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-md appearance-none cursor-pointer hover:border-blue-500 focus:outline-none"
-                    >
-                      {cert.src ? (
-                        <div className="flex items-center">
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        name="certificateFiles"
+                        className="hidden"
+                        id={`cert-${index}`}
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const updatedCert = {
+                              ...formData.certifications[index],
+                              file: file,
+                              src: URL.createObjectURL(file),
+                            };
+                            const updatedCerts = [...formData.certifications];
+                            updatedCerts[index] = updatedCert;
+                            setFormData(prev => ({
+                              ...prev,
+                              certifications: updatedCerts
+                            }));
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`cert-${index}`}
+                        className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                      >
+                        <svg className="-ml-1 mr-2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        {cert.file || cert.url ? 'Change' : 'Upload'} {cert.alt} Certificate
+                      </label>
+                      {(cert.file || cert.url) && (
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Certificate uploaded
+                        </div>
+                      )}
+                      {cert.src && (
+                        <div className="flex items-center mt-2">
                           <img
                             src={cert.src}
                             alt={cert.alt}
@@ -759,27 +686,8 @@ const handleSubmit = async (e) => {
                             {cert.alt || "Click to change"}
                           </span>
                         </div>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <svg
-                            className="w-6 h-6 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                          <span className="text-sm text-gray-500">
-                            Upload Certificate Image
-                          </span>
-                        </div>
                       )}
-                    </label>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -849,30 +757,32 @@ const handleSubmit = async (e) => {
 
         {/* Specifications Section */}
         <div className="mt-8">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Product Specifications
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(formData.specifications).map(([key, val]) => (
-              <div key={key} className="relative">
-                <RequiredLabel label={key} />
-                <input
-                  value={val}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      specifications: {
-                        ...prev.specifications,
-                        [key]: e.target.value,
-                      },
-                    }))
-                  }
-                  className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={`Enter ${key.toLowerCase()}`}
-                  required
-                />
-              </div>
-            ))}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Product Specifications
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Object.entries(formData.specifications).map(([key, val]) => (
+                <div key={key} className="relative">
+                  <RequiredLabel label={key} />
+                  <input
+                    value={val}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        specifications: {
+                          ...prev.specifications,
+                          [key]: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder={`Enter ${key.toLowerCase()}`}
+                    required
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -1085,6 +995,13 @@ const handleSubmit = async (e) => {
       </div>
     </>
   );
+}
+
+ProductCreateForm.propTypes = {
+  isEdit: PropTypes.bool,
+  product: PropTypes.object,
+  onSubmit: PropTypes.func,
+  onClose: PropTypes.func
 };
 
 export default ProductCreateForm;

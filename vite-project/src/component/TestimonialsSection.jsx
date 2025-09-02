@@ -1,9 +1,14 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
-import axios from 'axios';
+import axiosInstance from '../axios/axios.config';
 
-const API_URL = 'http://localhost:3001/api';
-
+/**
+ * A section component that displays testimonials in a carousel format.
+ * Fetches testimonials from the backend and displays them with navigation controls.
+ * @returns {React.ReactElement} The testimonials section component
+ */
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,11 +18,17 @@ const TestimonialsSection = () => {
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const response = await axios.get(`${API_URL}/testimonials`);
-        setTestimonials(response.data);
+        const response = await axiosInstance.get('/testimonials');
+        if (response.data && response.data.success) {
+          setTestimonials(response.data.data || []);
+        } else {
+          setError('No testimonials found');
+          setTestimonials([]);
+        }
       } catch (error) {
         console.error('Error fetching testimonials:', error);
-        setError('Failed to load testimonials');
+        setError(error.response?.data?.message || 'Failed to load testimonials');
+        setTestimonials([]);
       } finally {
         setLoading(false);
       }
@@ -43,6 +54,26 @@ const TestimonialsSection = () => {
       <section className="w-full py-16 px-4 text-white bg-gray-800">
         <div className="max-w-7xl mx-auto text-center">
           Loading testimonials...
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="w-full py-16 px-4 text-white bg-gray-800">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-red-400">Error: {error}</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!testimonials.length) {
+    return (
+      <section className="w-full py-16 px-4 text-white bg-gray-800">
+        <div className="max-w-7xl mx-auto text-center">
+          <p>No testimonials available.</p>
         </div>
       </section>
     );
@@ -95,8 +126,10 @@ const TestimonialsSection = () => {
               alt={testimonial.name}
               className="w-28 h-28 md:w-36 md:h-36 rounded-lg object-cover mb-4 md:mb-0 md:mr-6"
               onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'placeholder-image-url';
+                if (e.target instanceof HTMLImageElement) {
+                  e.target.onerror = null;
+                  e.target.src = '/placeholder-image.jpg';
+                }
               }}
             />
             <div>
@@ -121,8 +154,10 @@ const TestimonialsSection = () => {
             alt={testimonials[currentIndex].name}
             className="w-24 h-24 rounded-lg object-cover mb-4"
             onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'placeholder-image-url';
+              if (e.target instanceof HTMLImageElement) {
+                e.target.onerror = null;
+                e.target.src = '/placeholder-image.jpg';
+              }
             }}
           />
           <h3 className="text-lg font-semibold mb-2 text-center">

@@ -45,6 +45,28 @@ const upload = multer({
   }
 });
 
+// Route for uploading certificates
+router.post('/upload', upload.single('file'), asyncHandler(async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Return the Cloudinary URL
+    res.json({
+      success: true,
+      url: req.file.path,
+      public_id: req.file.filename
+    });
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    res.status(500).json({
+      message: 'Error uploading file',
+      error: error.message
+    });
+  }
+}));
+
 // Add certificate
 router.post('/add', upload.single('image'), asyncHandler(async (req, res) => {
   try {
@@ -152,21 +174,13 @@ router.get('/preview/:id', async (req, res) => {
 });
 
 // List all certificates (for admin panel)
-router.get('/', async (req, res) => {
-  try {
-    const certs = await Certificate.find().sort({ createdAt: -1 });
-    console.log('Found certificates:', certs);
-    res.json({ 
-      success: true, 
-      certificates: certs 
-    });
-  } catch (error) {
-    console.error('Error fetching certificates:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
-  }
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const certs = await Certificate.find().sort({ createdAt: -1 });
+  console.log('Found certificates:', certs);
+  res.json({
+    success: true,
+    data: certs
+  });
+}));
 
 module.exports = router;
