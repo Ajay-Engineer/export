@@ -43,8 +43,8 @@ const initialForm = {
   },
   packaging: [{ title: "", content: "" }],
   certifications: [
-    { src: "", alt: "GST", file: undefined },
-    { src: "", alt: "FSSAI", file: undefined },
+    { src: "", alt: "GST Certificate", file: undefined },
+    { src: "", alt: "FSSAI Certificate", file: undefined },
     { src: "", alt: "Export License", file: undefined }
   ],
   faqs: [{ q: "", a: "" }],
@@ -71,30 +71,31 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
   };
 
   // Fetch all products for edit/delete
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        // Use the admin route to fetch all products
-        const response = await axiosInstance.get('/products/admin');
-        console.log('Products response:', response.data);
-        
-        // Handle different response formats
-        let productsArray = [];
-        if (Array.isArray(response.data)) {
-          productsArray = response.data;
-        } else if (response.data.products && Array.isArray(response.data.products)) {
-          productsArray = response.data.products;
-        } else if (response.data.success && Array.isArray(response.data.products)) {
-          productsArray = response.data.products;
-        }
-        
-        setProducts(productsArray);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        alert('Error fetching products. Please try again.');
-        setProducts([]);
+  const fetchProducts = async () => {
+    try {
+      // Use the admin route to fetch all products
+      const response = await axiosInstance.get('/products/admin');
+      console.log('Products response:', response.data);
+
+      // Handle different response formats
+      let productsArray = [];
+      if (Array.isArray(response.data)) {
+        productsArray = response.data;
+      } else if (response.data.products && Array.isArray(response.data.products)) {
+        productsArray = response.data.products;
+      } else if (response.data.success && Array.isArray(response.data.products)) {
+        productsArray = response.data.products;
       }
-    };
+
+      setProducts(productsArray);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      alert('Error fetching products. Please try again.');
+      setProducts([]);
+    }
+  };
+
+  useEffect(() => {
     fetchProducts();
   }, []);
 
@@ -102,15 +103,24 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
   useEffect(() => {
     if (isEdit && product) {
       const formatted = { ...product };
-      // Ensure certifications shape
+      // Ensure certifications shape - remove _id fields and handle properly
       if (!formatted.certifications || !Array.isArray(formatted.certifications)) {
-        formatted.certifications = [{ src: "", alt: "", file: null }];
+        formatted.certifications = [
+          { src: "", alt: "GST Certificate", file: undefined },
+          { src: "", alt: "FSSAI Certificate", file: undefined },
+          { src: "", alt: "Export License", file: undefined }
+        ];
       } else {
-        formatted.certifications = formatted.certifications.map((c) => ({
-          ...c,
-          file: null,
-          src: c.src ? formatImageUrl(c.src) : c.src,
-        }));
+        formatted.certifications = formatted.certifications.map((c) => {
+          // Remove _id field and ensure proper structure
+          const { _id, ...cleanCert } = c;
+          return {
+            ...cleanCert,
+            file: undefined,
+            src: c.src ? formatImageUrl(c.src) : "",
+            alt: c.alt || ""
+          };
+        });
       }
 
       // Prefill images as absolute URLs for preview
@@ -187,6 +197,12 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
     setFormData({ ...formData, [arrayName]: updated });
   };
 
+  const handleCertificateChange = (index, field, value) => {
+    const updated = [...formData.certifications];
+    updated[index][field] = value;
+    setFormData({ ...formData, certifications: updated });
+  };
+
   const addArrayItem = (arrayName, defaultItem) => {
     setFormData((prev) => ({
       ...prev,
@@ -195,17 +211,45 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
   };
 
   const removeArrayItem = (arrayName, index) => {
-    setFormData((prev) => ({
-      ...prev,
-      [arrayName]: prev[arrayName].filter((_, i) => i !== index),
-    }));
+    setFormData((prev) => {
+      const newArray = prev[arrayName].filter((_, i) => i !== index);
+      
+      // Ensure we always have at least one item in each section
+      if (newArray.length === 0) {
+        let defaultItem;
+        if (arrayName === 'benefits') {
+          defaultItem = { title: "", description: "" };
+        } else if (arrayName === 'packaging') {
+          defaultItem = { title: "", content: "" };
+        } else if (arrayName === 'faqs') {
+          defaultItem = { q: "", a: "" };
+        } else if (arrayName === 'related') {
+          defaultItem = { title: "", image: "", link: "" };
+        } else if (arrayName === 'certifications') {
+          defaultItem = { src: "", alt: "New Certificate", file: undefined };
+        } else {
+          defaultItem = Object.fromEntries(
+            Object.keys(prev[arrayName][0] || {}).map((k) => [k, ""])
+          );
+        }
+        return {
+          ...prev,
+          [arrayName]: [defaultItem],
+        };
+      }
+      
+      return {
+        ...prev,
+        [arrayName]: newArray,
+      };
+    });
   };
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
 
-const uploadCertificate = async (file) => {
+const uploadImage = async (file) => {
     try {
-      console.log('Preparing to upload certificate:', file.name);
+      console.log('Preparing to upload image:', file.name);
       
       // Validate file size before upload
       if (file.size > MAX_FILE_SIZE) {
@@ -217,11 +261,11 @@ const uploadCertificate = async (file) => {
         throw new Error('Please upload an image file');
       }
 
-      const certFormData = new FormData();
-      certFormData.append('file', file);
+      const imageFormData = new FormData();
+      imageFormData.append('file', file);
       
       // Upload to cloudinary through our backend
-      const response = await axiosInstance.post('/certificates/upload', certFormData, {
+      const response = await axiosInstance.post('/products/upload', imageFormData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -236,18 +280,18 @@ const uploadCertificate = async (file) => {
         throw new Error('Upload successful but no URL returned');
       }
 
-      console.log('Certificate uploaded successfully:', response.data);
+      console.log('Image uploaded successfully:', response.data);
       return response.data.url;
     } catch (error) {
-      console.error('Error uploading certificate:', error);
+      console.error('Error uploading image:', error);
       if (error.response?.status === 404) {
-        throw new Error('Certificate upload service is not available. Please contact support.');
+        throw new Error('Image upload service is not available. Please contact support.');
       } else if (error.response?.status === 413) {
         throw new Error('File is too large. Please upload a smaller file.');
       } else if (error.code === 'ECONNABORTED') {
         throw new Error('Upload timed out. Please try again with a smaller file or better connection.');
       }
-      throw new Error(`Failed to upload certificate: ${error.response?.data?.message || error.message}`);
+      throw new Error(`Failed to upload image: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -263,6 +307,28 @@ const handleSubmit = async (e) => {
       if (missingFields.length > 0) {
         throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
       }
+      
+      // Validate form data structure
+      console.log('Validating form data structure...');
+      console.log('Form data:', formData);
+      
+      // Check if any arrays contain invalid data
+      const arraysToCheck = ['benefits', 'packaging', 'faqs', 'related'];
+      for (const arrayName of arraysToCheck) {
+        if (formData[arrayName] && Array.isArray(formData[arrayName])) {
+          for (let i = 0; i < formData[arrayName].length; i++) {
+            const item = formData[arrayName][i];
+            if (item && typeof item === 'object') {
+              for (const [key, value] of Object.entries(item)) {
+                if (value === undefined || value === null) {
+                  console.warn(`Warning: ${arrayName}[${i}].${key} is ${value}, converting to empty string`);
+                  formData[arrayName][i][key] = '';
+                }
+              }
+            }
+          }
+        }
+      }
 
       // Create FormData
       const formDataToSend = new FormData();
@@ -271,23 +337,35 @@ const handleSubmit = async (e) => {
       const processedCerts = [];
       if (formData.certifications && Array.isArray(formData.certifications)) {
         for (const cert of formData.certifications) {
+          // Clean the certificate data by removing _id and other unwanted fields
+          const { _id, file, ...cleanCert } = cert;
+          
           if (cert.file instanceof File) {
-            const url = await uploadCertificate(cert.file);
+            const url = await uploadImage(cert.file);
             processedCerts.push({
-              alt: cert.alt,
+              alt: cleanCert.alt || '',
               src: url
             });
-          } else if (cert.src) {
+          } else if (cleanCert.src && cleanCert.src.trim() !== '') {
             processedCerts.push({
-              alt: cert.alt,
-              src: cert.src
+              alt: cleanCert.alt || '',
+              src: cleanCert.src
             });
           }
         }
       }
 
       // Add certificates to form data
-      formDataToSend.append('certificates', JSON.stringify(processedCerts));
+      try {
+        if (processedCerts && Array.isArray(processedCerts) && processedCerts.length > 0) {
+          formDataToSend.append('certificationsData', JSON.stringify(processedCerts));
+        } else {
+          formDataToSend.append('certificationsData', JSON.stringify([]));
+        }
+      } catch (err) {
+        console.error('Error serializing certificates:', err);
+        formDataToSend.append('certificationsData', JSON.stringify([]));
+      }
 
       // Handle images
       const existingImages = imageFiles.filter(file => 
@@ -295,45 +373,284 @@ const handleSubmit = async (e) => {
       );
       const newImages = imageFiles.filter(file => file instanceof File);
 
-      formDataToSend.append('existingImages', JSON.stringify(existingImages));
-      newImages.forEach(file => {
-        formDataToSend.append('images', file);
-      });
+      // Handle images - ensure we always send valid data
+      try {
+        if (existingImages && Array.isArray(existingImages) && existingImages.length > 0) {
+          formDataToSend.append('existingImages', JSON.stringify(existingImages));
+        } else {
+          formDataToSend.append('existingImages', JSON.stringify([]));
+        }
+      } catch (err) {
+        console.error('Error serializing existing images:', err);
+        formDataToSend.append('existingImages', JSON.stringify([]));
+      }
+      
+      if (newImages && Array.isArray(newImages) && newImages.length > 0) {
+        newImages.forEach(file => {
+          if (file instanceof File) {
+            formDataToSend.append('images', file);
+          }
+        });
+      }
 
       // Add other fields
       formDataToSend.append('title', formData.title);
       formDataToSend.append('category', formData.category);
+      formDataToSend.append('visibility', formData.visibility);
       formDataToSend.append('shortDescription', formData.shortDescription);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('specifications', JSON.stringify(formData.specifications));
-      formDataToSend.append('benefits', JSON.stringify(formData.benefits));
+      
+      // Validate and add specifications
+      try {
+        if (formData.specifications && typeof formData.specifications === 'object') {
+          formDataToSend.append('specifications', JSON.stringify(formData.specifications));
+        } else {
+          formDataToSend.append('specifications', JSON.stringify(initialForm.specifications));
+        }
+      } catch (err) {
+        console.error('Error serializing specifications:', err);
+        formDataToSend.append('specifications', JSON.stringify(initialForm.specifications));
+      }
+      
+      // Validate and add benefits
+      try {
+        if (Array.isArray(formData.benefits) && formData.benefits.length > 0) {
+          formDataToSend.append('benefits', JSON.stringify(formData.benefits));
+        } else {
+          formDataToSend.append('benefits', JSON.stringify(initialForm.benefits));
+        }
+      } catch (err) {
+        console.error('Error serializing benefits:', err);
+        formDataToSend.append('benefits', JSON.stringify(initialForm.benefits));
+      }
+      
+      // Validate and add packaging
+      try {
+        if (Array.isArray(formData.packaging) && formData.packaging.length > 0) {
+          formDataToSend.append('packaging', JSON.stringify(formData.packaging));
+        } else {
+          formDataToSend.append('packaging', JSON.stringify(initialForm.packaging));
+        }
+      } catch (err) {
+        console.error('Error serializing packaging:', err);
+        formDataToSend.append('packaging', JSON.stringify(initialForm.packaging));
+      }
+      
+      // Validate and add faqs
+      try {
+        if (Array.isArray(formData.faqs) && formData.faqs.length > 0) {
+          formDataToSend.append('faqs', JSON.stringify(formData.faqs));
+        } else {
+          formDataToSend.append('faqs', JSON.stringify(initialForm.faqs));
+        }
+      } catch (err) {
+        console.error('Error serializing faqs:', err);
+        formDataToSend.append('faqs', JSON.stringify(initialForm.faqs));
+      }
+      
+      // Validate and add related
+      try {
+        if (Array.isArray(formData.related) && formData.related.length > 0) {
+          formDataToSend.append('related', JSON.stringify(formData.related));
+        } else {
+          formDataToSend.append('related', JSON.stringify(initialForm.related));
+        }
+      } catch (err) {
+        console.error('Error serializing related:', err);
+        formDataToSend.append('related', JSON.stringify(initialForm.related));
+      }
+      
       if (formData.videoUrl) formDataToSend.append('videoUrl', formData.videoUrl);
       if (formData.datasheetUrl) formDataToSend.append('datasheetUrl', formData.datasheetUrl);
 
+      // Log what we're sending
+      console.log('Submitting form data:');
+      console.log('Title:', formData.title);
+      console.log('Category:', formData.category);
+      console.log('Visibility:', formData.visibility);
+      console.log('Benefits:', formData.benefits);
+      console.log('Packaging:', formData.packaging);
+      console.log('FAQs:', formData.faqs);
+      console.log('Related:', formData.related);
+      
+      // Log the FormData contents for debugging
+      console.log('FormData contents:');
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}:`, value);
+      }
+      
+      // Validate the data before sending
+      console.log('Validating data before submission...');
+      
+      // Check for any undefined or null values that might cause issues
+      const validationErrors = [];
+      
+      // Check basic fields
+      if (!formData.title || formData.title.trim() === '') {
+        validationErrors.push('Title is empty or undefined');
+      }
+      if (!formData.slug || formData.slug.trim() === '') {
+        validationErrors.push('Slug is empty or undefined');
+      }
+      if (!formData.category || formData.category.trim() === '') {
+        validationErrors.push('Category is empty or undefined');
+      }
+      
+      // Check arrays for invalid data
+      const arraysToValidate = ['benefits', 'packaging', 'faqs', 'related'];
+      for (const arrayName of arraysToValidate) {
+        if (formData[arrayName] && Array.isArray(formData[arrayName])) {
+          for (let i = 0; i < formData[arrayName].length; i++) {
+            const item = formData[arrayName][i];
+            if (item && typeof item === 'object') {
+              for (const [key, value] of Object.entries(item)) {
+                if (value === undefined || value === null) {
+                  validationErrors.push(`${arrayName}[${i}].${key} is ${value}`);
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      if (validationErrors.length > 0) {
+        console.warn('Validation warnings:', validationErrors);
+      } else {
+        console.log('Data validation passed');
+      }
+      
+      // Clean the data by removing _id fields from embedded arrays
+      const cleanData = (data) => {
+        if (Array.isArray(data)) {
+          return data.map(item => {
+            if (typeof item === 'object' && item !== null) {
+              const { _id, ...cleanItem } = item;
+              return cleanItem;
+            }
+            return item;
+          });
+        }
+        return data;
+      };
+      
+      // Test JSON serialization to catch any circular references
+      try {
+        const testData = {
+          title: formData.title,
+          category: formData.category,
+          benefits: cleanData(formData.benefits),
+          packaging: cleanData(formData.packaging),
+          faqs: cleanData(formData.faqs),
+          related: cleanData(formData.related)
+        };
+        JSON.stringify(testData);
+        console.log('JSON serialization test passed');
+      } catch (err) {
+        console.error('JSON serialization test failed:', err);
+        throw new Error(`Data contains circular references or invalid structures: ${err.message}`);
+      }
+      
       // Submit to server
+      console.log('Submitting to:', editId ? `/products/${editId}` : '/products');
+      console.log('Method:', editId ? 'PUT' : 'POST');
+      console.log('Edit ID:', editId);
+
+      // Log the cleaned data for debugging
+      console.log('Cleaned data before sending:');
+      console.log('Benefits (cleaned):', cleanData(formData.benefits));
+      console.log('Packaging (cleaned):', cleanData(formData.packaging));
+      console.log('FAQs (cleaned):', cleanData(formData.faqs));
+      console.log('Related (cleaned):', cleanData(formData.related));
+      console.log('Certifications (cleaned):', processedCerts);
+
+      console.log('Submitting with complete form data including image files...');
+
       const result = await axiosInstance[editId ? 'put' : 'post'](
         editId ? `/products/${editId}` : '/products',
         formDataToSend,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60000, // 1 minute timeout
+          validateStatus: function (status) {
+            return status < 500; // Don't throw error for 4xx status codes
+          }
+        }
       );
 
       if (result.data.success) {
-        setProducts(prev => 
-          editId 
+        // Update the products list
+        setProducts(prev =>
+          editId
             ? prev.map(p => p._id === editId ? result.data.product : p)
             : [...prev, result.data.product]
         );
 
+        // Properly reset all form states
         setFormData(initialForm);
         setImageFiles([undefined]);
         setEditId(null);
+
+        // Clear any object URLs to prevent memory leaks
+        imageFiles.forEach((file) => {
+          if (file instanceof File) {
+            URL.revokeObjectURL(URL.createObjectURL(file));
+          }
+        });
+
+        // Clear certificate object URLs
+        formData.certifications.forEach((cert) => {
+          if (cert.src && cert.src.startsWith("blob:")) {
+            URL.revokeObjectURL(cert.src);
+          }
+        });
+
         alert(editId ? 'Product updated successfully!' : 'Product created successfully!');
+
+        // Refresh the products list to show updated data
+        if (editId) {
+          await fetchProducts();
+        }
       } else {
         throw new Error(result.data.error || 'Operation failed');
       }
     } catch (error) {
       console.error('Error in form submission:', error);
-      setError(error.response?.data?.message || error.message);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
+      
+      // Log the full error response for debugging
+      if (error.response?.data) {
+        console.error('Full error response data:', JSON.stringify(error.response.data, null, 2));
+      }
+      
+      // Log the request payload that was sent
+      console.error('Request payload that was sent:');
+      if (error.config?.data instanceof FormData) {
+        for (let [key, value] of error.config.data.entries()) {
+          console.error(`${key}:`, value);
+        }
+      }
+      
+      // Set a more detailed error message
+      let errorMessage = 'An error occurred while submitting the form.';
+      if (error.response?.status === 500) {
+        errorMessage = 'Server error (500): The server encountered an internal error. Please check the console for details.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -349,25 +666,42 @@ const handleSubmit = async (e) => {
         title: prod.title || '',
         slug: prod.slug || '',
         category: prod.category || '',
+        visibility: prod.visibility || 'public', // Add missing visibility property
         shortDescription: prod.shortDescription || '',
         description: prod.description || '',
         videoUrl: prod.videoUrl || '',
         datasheetUrl: prod.datasheetUrl || '',
-        benefits: Array.isArray(prod.benefits) ? prod.benefits : [],
+        benefits: Array.isArray(prod.benefits) && prod.benefits.length > 0 
+          ? prod.benefits 
+          : initialForm.benefits,
         specifications: prod.specifications || initialForm.specifications,
-        packaging: Array.isArray(prod.packaging) ? prod.packaging : [],
+        packaging: Array.isArray(prod.packaging) && prod.packaging.length > 0 
+          ? prod.packaging 
+          : initialForm.packaging,
         certifications: Array.isArray(prod.certifications) 
-          ? prod.certifications.map(cert => ({
-              alt: cert.alt || '',
-              src: cert.src || cert.url || '', // Try both src and url fields
-              file: undefined
-            }))
+          ? prod.certifications.map(cert => {
+              // Remove _id field and ensure proper structure
+              const { _id, ...cleanCert } = cert;
+              return {
+                alt: cleanCert.alt || '',
+                src: cleanCert.src || cleanCert.url || '', // Try both src and url fields
+                file: undefined
+              };
+            })
           : initialForm.certifications,
-        faqs: Array.isArray(prod.faqs) ? prod.faqs : [],
-        related: Array.isArray(prod.related) ? prod.related : [],
+        faqs: Array.isArray(prod.faqs) && prod.faqs.length > 0 
+          ? prod.faqs 
+          : initialForm.faqs,
+        related: Array.isArray(prod.related) && prod.related.length > 0 
+          ? prod.related 
+          : initialForm.related,
       };
 
       console.log('Formatted data:', formattedData);
+      console.log('Benefits array:', formattedData.benefits);
+      console.log('Packaging array:', formattedData.packaging);
+      console.log('FAQs array:', formattedData.faqs);
+      console.log('Related array:', formattedData.related);
 
       // Handle existing images
       if (prod.images && Array.isArray(prod.images)) {
@@ -377,8 +711,33 @@ const handleSubmit = async (e) => {
         setImageFiles([undefined]);
       }
 
+      // Ensure all arrays have at least one item for editing
+      const finalFormData = { ...formattedData };
+      
+      // Ensure benefits has at least one item
+      if (!finalFormData.benefits || finalFormData.benefits.length === 0) {
+        finalFormData.benefits = initialForm.benefits;
+      }
+      
+      // Ensure packaging has at least one item
+      if (!finalFormData.packaging || finalFormData.packaging.length === 0) {
+        finalFormData.packaging = initialForm.packaging;
+      }
+      
+      // Ensure faqs has at least one item
+      if (!finalFormData.faqs || finalFormData.faqs.length === 0) {
+        finalFormData.faqs = initialForm.faqs;
+      }
+      
+      // Ensure related has at least one item
+      if (!finalFormData.related || finalFormData.related.length === 0) {
+        finalFormData.related = initialForm.related;
+      }
+      
+      console.log('Final form data:', finalFormData);
+      
       // Set form data and edit ID
-      setFormData(formattedData);
+      setFormData(finalFormData);
       setEditId(prod._id);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -556,7 +915,12 @@ const handleSubmit = async (e) => {
                                 src={URL.createObjectURL(file)} 
                                 alt="Preview" 
                                 className="h-24 object-contain mr-2"
-                                onLoad={(e) => URL.revokeObjectURL(e.target.src)}
+                                onLoad={(e) => {
+                                  const img = e.target;
+                                  if (img && 'src' in img && typeof img.src === 'string') {
+                                    URL.revokeObjectURL(img.src);
+                                  }
+                                }}
                               />
                               <span className="text-sm text-gray-600">{file.name}</span>
                             </>
@@ -568,7 +932,10 @@ const handleSubmit = async (e) => {
                                 className="h-24 object-contain mr-2"
                                 onError={(e) => {
                                   console.error('Image load error:', e);
-                                  e.target.src = 'placeholder.jpg';
+                                  const img = e.target;
+                                  if (img && 'src' in img) {
+                                    img.src = 'placeholder.jpg';
+                                  }
                                 }}
                               />
                               <span className="text-sm text-gray-600">
@@ -665,9 +1032,9 @@ const handleSubmit = async (e) => {
                         <svg className="-ml-1 mr-2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
-                        {cert.file || cert.url ? 'Change' : 'Upload'} {cert.alt} Certificate
+                        {cert.file || cert.src ? 'Change' : 'Upload'} {cert.alt} Certificate
                       </label>
-                      {(cert.file || cert.url) && (
+                      {(cert.file || cert.src) && (
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -697,8 +1064,7 @@ const handleSubmit = async (e) => {
                       type="text"
                       value={cert.alt}
                       onChange={(e) =>
-                        handleArrayChange(
-                          "certifications",
+                        handleCertificateChange(
                           index,
                           "alt",
                           e.target.value
@@ -733,7 +1099,7 @@ const handleSubmit = async (e) => {
             <button
               type="button"
               onClick={() =>
-                addArrayItem("certifications", { src: "", alt: "", file: null })
+                addArrayItem("certifications", { src: "", alt: "New Certificate", file: undefined })
               }
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
@@ -787,7 +1153,7 @@ const handleSubmit = async (e) => {
         </div>
 
         {/* Dynamic Sections */}
-        {["benefits", "packaging", "certifications", "faqs", "related"].map(
+        {["benefits", "packaging", "faqs", "related"].map(
           (section) => (
             <div key={section} className="mt-8 bg-gray-50 rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
@@ -796,14 +1162,23 @@ const handleSubmit = async (e) => {
                 </h3>
                 <button
                   type="button"
-                  onClick={() =>
-                    addArrayItem(
-                      section,
-                      Object.fromEntries(
-                        Object.keys(formData[section][0]).map((k) => [k, ""])
-                      )
-                    )
-                  }
+                  onClick={() => {
+                    let defaultItem;
+                    if (section === 'benefits') {
+                      defaultItem = { title: "", description: "" };
+                    } else if (section === 'packaging') {
+                      defaultItem = { title: "", content: "" };
+                    } else if (section === 'faqs') {
+                      defaultItem = { q: "", a: "" };
+                    } else if (section === 'related') {
+                      defaultItem = { title: "", image: "", link: "" };
+                    } else {
+                      defaultItem = Object.fromEntries(
+                        Object.keys(formData[section][0] || {}).map((k) => [k, ""])
+                      );
+                    }
+                    addArrayItem(section, defaultItem);
+                  }}
                   className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   <svg
@@ -823,11 +1198,16 @@ const handleSubmit = async (e) => {
                 </button>
               </div>
               <div className="space-y-4">
-                {formData[section].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="relative p-4 bg-white rounded-md shadow-sm border border-gray-200"
-                  >
+                {formData[section].length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">
+                    No {section} added yet. Click "Add {section.slice(0, -1)}" to get started.
+                  </div>
+                ) : (
+                  formData[section].map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="relative p-4 bg-white rounded-md shadow-sm border border-gray-200"
+                    >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {Object.entries(item).map(([key, val]) => (
                         <div key={key}>
@@ -868,9 +1248,10 @@ const handleSubmit = async (e) => {
                           d="M6 18L18 6M6 6l12 12"
                         />
                       </svg>
-                    </button>
-                  </div>
-                ))}
+                                         </button>
+                   </div>
+                 ))
+                )}
               </div>
             </div>
           )
@@ -983,7 +1364,7 @@ const handleSubmit = async (e) => {
                 ))}
                 {(!Array.isArray(products) || products.length === 0) && (
                   <tr>
-                    <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
                       No products found
                     </td>
                   </tr>

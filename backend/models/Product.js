@@ -46,21 +46,13 @@ const productSchema = new mongoose.Schema({
     required: true
   }],
   certifications: [{
+    src: {
+      type: String,
+      required: true
+    },
     alt: {
       type: String,
       required: true
-    },
-    url: {
-      type: String,
-      required: false
-    },
-    index: {
-      type: Number,
-      required: true
-    },
-    isNew: {
-      type: Boolean,
-      default: false
     }
   }],
   benefits: [{
@@ -91,16 +83,6 @@ const productSchema = new mongoose.Schema({
     content: {
       type: String,
       required: true
-    }
-  }],
-  certifications: [{
-    src: {
-      type: String,
-      
-    },
-    alt: {
-      type: String,
-  
     }
   }],
   faqs: [{

@@ -9,15 +9,21 @@ const certificateSchema = new mongoose.Schema({
   image: {
     type: String,
     required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
-}, {
-  timestamps: true // This will automatically manage createdAt and updatedAt
 });
 
-// Create indexes for better query performance
-certificateSchema.index({ title: 1 });
-certificateSchema.index({ createdAt: -1 });
+// Update the updatedAt field before saving
+certificateSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
-const Certificate = mongoose.model('Certificate', certificateSchema);
-
-module.exports = Certificate;
+module.exports = mongoose.model('Certificate', certificateSchema);

@@ -7,10 +7,12 @@ const cors = require('cors');
 const fs = require('fs');
 const helmet = require('helmet');
 const hpp = require('hpp');
-const certificateRouter = require('./routes/certificate');
+
 const testimonialRouter = require('./routes/testimonial');
 const productRouter = require('./routes/product');
 const packagingRouter = require('./routes/packaging');
+const certificateRouter = require('./routes/certificate');
+const categoriesRouter = require('./routes/categories');
 const cookieParser = require('cookie-parser');
 
 const app = express();
@@ -70,9 +72,10 @@ connectDB();
 
 // API Routes
 app.use('/api/products', productRouter);
-app.use('/api/certificates', certificateRouter);
 app.use('/api/testimonials', testimonialRouter);
 app.use('/api/packaging', packagingRouter);
+app.use('/api/certificates', certificateRouter);
+app.use('/api/categories', categoriesRouter);
 
 // Unified error handling middleware
 app.use((err, req, res, next) => {

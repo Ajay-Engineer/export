@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Download, Mail, CheckCircle, Plus } from "lucide-react";
 import axios from "axios";
 
@@ -36,7 +37,8 @@ export default function ProductDetailPage({
   const [showBenefitForm, setShowBenefitForm] = useState(false);
   const [showFaqForm, setShowFaqForm] = useState(false);
   const [newBenefit, setNewBenefit] = useState({ title: '', description: '' });
-  const [newFaq, setNewFaq] = useState({ question: '', answer: '' });
+  const [newFaq, setNewFaq] = useState({ q: '', a: '' });
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   
   // Debug log for benefits
   useEffect(() => {
@@ -114,32 +116,107 @@ export default function ProductDetailPage({
       </div>
 
       {/* Hero Section */}
-      <section className="w-full px-0 py-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-        {((mainImage || (images && images.length > 0)) ) && (
-          <motion.img
-            src={formatImageUrl(mainImage ?? images[0])}
-            alt={title}
-            className="w-full h-[400px] object-cover rounded-lg shadow-md"
-            variants={fadeIn}
-            initial="hidden"
-            animate="visible"
-          />
-        )}
-        {videoUrl && (
-          <motion.div
-            className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg shadow-md"
-            variants={fadeIn}
-            initial="hidden"
-            animate="visible"
-          >
-            <iframe
-              src={videoUrl}
-              title="Product Video"
-              className="absolute top-0 left-0 w-full h-full"
-              allowFullScreen
-            />
-          </motion.div>
-        )}
+      <section className="w-full px-0 py-10">
+        <div className="max-w-[1440px] mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Image Display */}
+            <div className="lg:col-span-2">
+              {((mainImage || (images && images.length > 0))) && (
+                <motion.div
+                  className="relative overflow-hidden rounded-xl shadow-lg bg-gray-100 group"
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <img
+                    src={formatImageUrl(images && images.length > 0 ? images[selectedImageIndex] : mainImage)}
+                    alt={title}
+                    className="w-full h-[500px] object-cover hover:scale-105 transition-transform duration-500"
+                  />
+
+                  {/* Navigation Arrows */}
+                  {images && images.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : images.length - 1)}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedImageIndex(prev => prev < images.length - 1 ? prev + 1 : 0)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Image Counter */}
+                  {images && images.length > 1 && (
+                    <div className="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+                      {selectedImageIndex + 1} / {images.length}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Video Section */}
+              {videoUrl && (
+                <motion.div
+                  className="relative pb-[56.25%] h-0 overflow-hidden rounded-xl shadow-lg mt-6"
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <iframe
+                    src={videoUrl}
+                    title="Product Video"
+                    className="absolute top-0 left-0 w-full h-full rounded-xl"
+                    allowFullScreen
+                  />
+                </motion.div>
+              )}
+            </div>
+
+            {/* Image Gallery Thumbnails */}
+            {images && images.length > 1 && (
+              <div className="lg:col-span-1">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Product Images</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {images.map((image, index) => (
+                    <motion.div
+                      key={index}
+                      className={`relative cursor-pointer rounded-lg overflow-hidden shadow-md transition-all duration-300 ${
+                        selectedImageIndex === index
+                          ? 'ring-2 ring-blue-500 shadow-xl'
+                          : 'hover:shadow-lg'
+                      }`}
+                      onClick={() => setSelectedImageIndex(index)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <img
+                        src={formatImageUrl(image)}
+                        alt={`${title} - Image ${index + 1}`}
+                        className="w-full h-24 object-cover"
+                      />
+                      {selectedImageIndex === index && (
+                        <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
+                          <div className="bg-blue-500 text-white rounded-full p-1">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* About */}
@@ -344,8 +421,8 @@ export default function ProductDetailPage({
                   <label className="block text-sm font-medium mb-1">Question</label>
                   <input
                     type="text"
-                    value={newFaq.question}
-                    onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
+                    value={newFaq.q}
+                    onChange={(e) => setNewFaq({ ...newFaq, q: e.target.value })}
                     className="w-full p-2 border rounded"
                     required
                   />
@@ -353,8 +430,8 @@ export default function ProductDetailPage({
                 <div>
                   <label className="block text-sm font-medium mb-1">Answer</label>
                   <textarea
-                    value={newFaq.answer}
-                    onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
+                    value={newFaq.a}
+                    onChange={(e) => setNewFaq({ ...newFaq, a: e.target.value })}
                     className="w-full p-2 border rounded"
                     required
                   />
@@ -378,8 +455,8 @@ export default function ProductDetailPage({
           <div className="space-y-4">
             {faqs.map((faq, i) => (
               <div key={i} className="bg-gray-50 rounded-lg p-6">
-                <h3 className="font-semibold text-lg mb-2">{faq.question}</h3>
-                <p className="text-gray-700">{faq.answer}</p>
+                <h3 className="font-semibold text-lg mb-2">{faq.q}</h3>
+                <p className="text-gray-700">{faq.a}</p>
               </div>
             ))}
           </div>
@@ -390,23 +467,42 @@ export default function ProductDetailPage({
       {certifications && certifications.length > 0 && (
         <motion.section
           id="certs"
-          className="w-full bg-white py-12 px-0"
+          className="w-full bg-gradient-to-br from-gray-50 to-white py-20 px-0"
           variants={fadeIn}
           initial="hidden"
           whileInView="visible"
         >
           <div className="max-w-[1440px] mx-auto px-6">
-            <h2 className="text-2xl font-semibold mb-6">Certifications</h2>
-            <div className="flex gap-6 overflow-x-auto snap-x pb-4">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">Certifications & Compliance</h2>
+              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                Our products meet the highest industry standards and certifications
+              </p>
+            </div>
+            <div className={`flex ${certifications.length === 1 ? 'justify-center' : 'justify-center flex-wrap'} gap-8 max-w-6xl mx-auto`}>
               {certifications.map((cert, i) => (
-                <div key={i} className="snap-center flex-shrink-0">
-                  <img
-                    src={formatImageUrl(cert.image || cert.src)}
-                    alt={cert.name || cert.alt || 'Certification'}
-                    className="h-16 object-contain hover:scale-110 transition-transform cursor-pointer"
-                    onClick={() => window.open(formatImageUrl(cert.image || cert.src), '_blank')}
-                  />
-                </div>
+                <motion.div
+                  key={i}
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 p-8 border border-gray-200 hover:border-blue-300 cursor-pointer transform hover:-translate-y-2"
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() => window.open(formatImageUrl(cert.image || cert.src), '_blank')}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-48 h-48 mb-6 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl group-hover:from-blue-50 group-hover:to-blue-100 transition-all duration-300 shadow-inner">
+                      <img
+                        src={formatImageUrl(cert.image || cert.src)}
+                        alt={cert.name || cert.alt || 'Certification'}
+                        className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    {cert.name && (
+                      <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300 mb-2">
+                        {cert.name}
+                      </h3>
+                    )}
+                    <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </div>

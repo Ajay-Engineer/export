@@ -37,17 +37,12 @@ const storage = new CloudinaryStorage({
       return 'products';
     },
     format: async (req, file) => {
-      // Preserve PDF format, convert images to WebP
-      if (file.mimetype === 'application/pdf') {
-        return 'pdf';
-      }
+      // Convert all images to WebP for better performance
       return 'webp';
     },
     public_id: async (req, file) => {
       const timestamp = Date.now();
       const uniqueSuffix = Math.round(Math.random() * 1E9);
-      const ext = path.extname(file.originalname);
-      const basename = path.basename(file.originalname, ext);
       
       // Use different naming conventions for certificates and images
       if (file.fieldname === 'certificateFiles') {
@@ -57,18 +52,16 @@ const storage = new CloudinaryStorage({
     },
     transformation: async (req, file) => {
       if (file.fieldname === 'certificateFiles') {
-        if (file.mimetype.startsWith('image/')) {
-          return [{
-            width: 800,
-            height: 800,
-            crop: 'limit',
-            format: 'webp',
-            quality: 'auto'
-          }];
-        }
-        return []; // No transformation for PDFs
+        // Certificate images - optimize for display
+        return [{
+          width: 800,
+          height: 800,
+          crop: 'limit',
+          format: 'webp',
+          quality: 'auto'
+        }];
       } else {
-        // Product images
+        // Product images - higher quality for product display
         return [{
           width: 1200,
           height: 1200,
@@ -81,7 +74,7 @@ const storage = new CloudinaryStorage({
   },
 });
 
-// Add file filter for images and certificates (allow images and PDFs)
+// Add file filter for images only
 const fileFilter = (req, file, cb) => {
   console.log('Checking file:', {
     fieldname: file.fieldname,
@@ -89,9 +82,9 @@ const fileFilter = (req, file, cb) => {
     mimetype: file.mimetype
   });
 
-  // Check mime type and file extension
-  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
-  const allowedExtensions = /\.(jpg|jpeg|png|gif|pdf)$/i;
+  // Check mime type and file extension - only allow images
+  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const allowedExtensions = /\.(jpg|jpeg|png|gif|webp)$/i;
 
   const mimeTypeOk = allowedMimeTypes.includes(file.mimetype);
   const extensionOk = file.originalname.toLowerCase().match(allowedExtensions);
@@ -109,7 +102,7 @@ const fileFilter = (req, file, cb) => {
       file: file.originalname,
       mimetype: file.mimetype
     });
-    return cb(new Error(`File ${file.originalname} not allowed: must be an image or PDF`), false);
+    return cb(new Error(`File ${file.originalname} not allowed: must be an image file`), false);
   }
 
   console.log('Accepted file:', file.originalname, file.mimetype);
@@ -129,8 +122,7 @@ const multerUpload = multer({
 // Create middleware for handling both images and certificates
 const upload = multerUpload.fields([
   { name: 'images', maxCount: 5 },
-  { name: 'certificateFiles', maxCount: 5 },
-  { name: 'certificates', maxCount: 5 } // Add this as a fallback
+  { name: 'certificateFiles', maxCount: 5 }
 ]);
 
 // Helper function to parse JSON safely
@@ -160,6 +152,32 @@ const asyncHandler = (fn) => (req, res, next) => {
 
 // Routes
 
+// Upload image endpoint for both product images and certificates
+router.post('/upload', multerUpload.single('file'), asyncHandler(async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'No file uploaded' 
+      });
+    }
+
+    // Return the Cloudinary URL
+    res.json({
+      success: true,
+      url: req.file.path,
+      public_id: req.file.filename
+    });
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error uploading file',
+      message: error.message
+    });
+  }
+}));
+
 // Get all products with optional category filter
 // Public route: show all products (no visibility filter)
 router.get('/', asyncHandler(async (req, res) => {
@@ -178,8 +196,15 @@ router.get('/', asyncHandler(async (req, res) => {
     Product.countDocuments(query)
   ]);
 
-  res.json({ 
-    success: true, 
+  // Add cache control headers to prevent caching
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+
+  res.json({
+    success: true,
     products: products,
     pagination: {
       total,
@@ -206,8 +231,15 @@ router.get('/admin', asyncHandler(async (req, res) => {
     Product.countDocuments(query)
   ]);
 
-  res.json({ 
-    success: true, 
+  // Add cache control headers to prevent caching
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+
+  res.json({
+    success: true,
     products: products,
     pagination: {
       total,
@@ -249,8 +281,12 @@ router.post('/', upload, asyncHandler(async (req, res) => {
       description,
       shortDescription,
       category,
+      visibility,
       specifications,
-      features,
+      benefits,
+      packaging,
+      faqs,
+      related,
       videoUrl,
       datasheetUrl,
       certificationsData
@@ -261,6 +297,7 @@ router.post('/', upload, asyncHandler(async (req, res) => {
       description,
       shortDescription,
       category,
+      visibility,
       certificationsData
     });
 
@@ -279,42 +316,42 @@ router.post('/', upload, asyncHandler(async (req, res) => {
     // Create slug from title
     const slug = slugify(title, { lower: true, strict: true });
 
-    // Process certifications
+    // Process certifications - now handled directly as part of product
     const certifications = safeJSONParse(certificationsData, []);
     const processedCertifications = [];
     
-    // Handle certificate files
-    // Default certificates if none provided
-    const defaultCertificates = [
-      { alt: 'GST', url: '' },
-      { alt: 'FSSAI', url: '' },
-      { alt: 'Export License', url: '' }
-    ];
-
-    if (certifications && certifications.length > 0) {
-      for (const cert of certifications) {
-        if (req.files && req.files.certificateFiles) {
-          const certFile = req.files.certificateFiles.find(f => f.originalname === `certificateFile_${cert.index}`);
-          if (certFile) {
-            processedCertifications.push({
-              ...cert,
-              url: certFile.path // Cloudinary URL
-            });
-          } else if (cert.url) {
-            processedCertifications.push(cert);
-          }
-        } else if (cert.url) {
-          processedCertifications.push(cert);
+    // Handle certificate files - upload them to Cloudinary and store URLs
+    if (req.files && req.files.certificateFiles) {
+      const certFiles = Array.isArray(req.files.certificateFiles) 
+        ? req.files.certificateFiles 
+        : [req.files.certificateFiles];
+      
+      for (let i = 0; i < Math.min(certFiles.length, certifications.length); i++) {
+        const certFile = certFiles[i];
+        const cert = certifications[i];
+        
+        if (certFile && cert) {
+          processedCertifications.push({
+            src: certFile.path, // Cloudinary URL
+            alt: cert.alt || 'Certificate'
+          });
         }
       }
-    } else {
-      // Use default certificates if none provided
-      processedCertifications.push(...defaultCertificates);
+    } else if (certifications && certifications.length > 0) {
+      // If no new files but we have existing certificate data
+      for (const cert of certifications) {
+        if (cert.src && cert.src.trim() !== '') {
+          processedCertifications.push({
+            src: cert.src,
+            alt: cert.alt || 'Certificate'
+          });
+        }
+      }
     }
 
     // Handle images
     const existingImages = safeJSONParse(req.body.existingImages, []);
-    const uploadedImages = req.files.images ? req.files.images.map(file => file.path) : [];
+    const uploadedImages = req.files && req.files.images ? req.files.images.map(file => file.path) : [];
     const finalImages = [...existingImages, ...uploadedImages];
 
     // Create the product data
@@ -324,27 +361,15 @@ router.post('/', upload, asyncHandler(async (req, res) => {
       description,
       shortDescription,
       category,
+      visibility: visibility || 'public',
       specifications: safeJSONParse(specifications, {}),
-      benefits: safeJSONParse(features, []),
+      benefits: safeJSONParse(benefits, []),
+      packaging: safeJSONParse(packaging, []),
+      faqs: safeJSONParse(faqs, []),
+      related: safeJSONParse(related, []),
       certifications: processedCertifications,
       videoUrl: videoUrl || '',
       datasheetUrl: datasheetUrl || '',
-      packaging: [
-        {
-          title: "Standard Wise Packing",
-          content: "Our standard packing process is designed to meet global compliance regulations, providing reliable protection for goods during long-distance transportation."
-        },
-        {
-          title: "Size Wise Packing",
-          content: "Each product is packed precisely according to its size—ensuring minimal wasted space and maximum efficiency."
-        },
-        {
-          title: "Regional Wise Packing",
-          content: "We understand the specific challenges faced during regional transport. That's why our regional-wise packing considers climate sensitivity and regulatory compliance."
-        }
-      ],
-      faqs: [],
-      related: [],
       images: finalImages
     });
 
@@ -380,7 +405,7 @@ router.put('/:id', upload, asyncHandler(async (req, res) => {
       });
     }
 
-    // Process certificates
+    // Process certificates - now handled directly as part of product
     const certifications = safeJSONParse(req.body.certificationsData, []);
     const processedCertifications = [];
     
@@ -390,34 +415,30 @@ router.put('/:id', upload, asyncHandler(async (req, res) => {
       files: req.files?.certificateFiles
     });
     
-    if (certifications && certifications.length > 0) {
-      for (const cert of certifications) {
-        if (cert.isNew && req.files?.certificateFiles) {
-          // Find the matching uploaded file
-          const certFiles = Array.isArray(req.files.certificateFiles) 
-            ? req.files.certificateFiles 
-            : [req.files.certificateFiles];
-
-          const certFile = certFiles.find(f => f.originalname === cert.filename);
-          
-          console.log('Processing certificate:', {
-            certificate: cert,
-            foundFile: certFile ? certFile.originalname : null
-          });
-          
-          if (certFile) {
-            processedCertifications.push({
-              alt: cert.alt || 'Certificate',
-              url: certFile.path, // Cloudinary URL
-              type: certFile.mimetype
-            });
-          }
-        } else if (cert.url) {
-          // Keep existing certificate
+    // Handle certificate files - upload them to Cloudinary and store URLs
+    if (req.files && req.files.certificateFiles) {
+      const certFiles = Array.isArray(req.files.certificateFiles) 
+        ? req.files.certificateFiles 
+        : [req.files.certificateFiles];
+      
+      for (let i = 0; i < Math.min(certFiles.length, certifications.length); i++) {
+        const certFile = certFiles[i];
+        const cert = certifications[i];
+        
+        if (certFile && cert) {
           processedCertifications.push({
-            alt: cert.alt,
-            url: cert.url,
-            type: cert.type || 'unknown'
+            src: certFile.path, // Cloudinary URL
+            alt: cert.alt || 'Certificate'
+          });
+        }
+      }
+    } else if (certifications && certifications.length > 0) {
+      // If no new files but we have existing certificate data
+      for (const cert of certifications) {
+        if (cert.src && cert.src.trim() !== '') {
+          processedCertifications.push({
+            src: cert.src,
+            alt: cert.alt || 'Certificate'
           });
         }
       }
@@ -425,36 +446,23 @@ router.put('/:id', upload, asyncHandler(async (req, res) => {
     
     console.log('Final processed certificates:', processedCertifications);
 
-    const defaultPackaging = [
-      {
-        title: "Standard Wise Packing",
-        content: "Our standard packing process is designed to meet global compliance regulations, providing reliable protection for goods during long-distance transportation."
-      },
-      {
-        title: "Size Wise Packing",
-        content: "Each product is packed precisely according to its size—ensuring minimal wasted space and maximum efficiency."
-      },
-      {
-        title: "Regional Wise Packing",
-        content: "We understand the specific challenges faced during regional transport. That's why our regional-wise packing considers climate sensitivity and regulatory compliance."
-      }
-    ];
-
-    // Create update data object
     // Prepare update data
     const updateData = {
       title: req.body.title,
       description: req.body.description,
       shortDescription: req.body.shortDescription,
       category: req.body.category,
+      visibility: req.body.visibility || existingProduct.visibility,
       specifications: safeJSONParse(req.body.specifications, {}),
-      benefits: safeJSONParse(req.body.features, []),
-      packaging: req.body.packaging && req.body.packaging.length > 0 ? req.body.packaging : defaultPackaging,
+      benefits: safeJSONParse(req.body.benefits, []),
+      packaging: safeJSONParse(req.body.packaging, []),
+      faqs: safeJSONParse(req.body.faqs, []),
+      related: safeJSONParse(req.body.related, []),
       videoUrl: req.body.videoUrl || existingProduct.videoUrl,
       datasheetUrl: req.body.datasheetUrl || existingProduct.datasheetUrl
     };
 
-    // Only update certifications if we have processed some
+    // Update certifications if we have processed some
     if (processedCertifications.length > 0) {
       updateData.certifications = processedCertifications;
     }
@@ -528,16 +536,59 @@ router.put('/:id', upload, asyncHandler(async (req, res) => {
       updateSuccess: true
     });
 
+    // Add cache control headers to prevent caching of updated data
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     res.json({
-      success: true, 
-      message: 'Product updated successfully', 
-      product: updatedProduct 
+      success: true,
+      message: 'Product updated successfully',
+      product: updatedProduct
     });
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Error updating product'
+    });
+  }
+}));
+
+// Add FAQ to product
+router.post('/:id/faqs', asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { question, answer } = req.body;
+
+    if (!question || !answer) {
+      return res.status(400).json({
+        success: false,
+        error: 'Question and answer are required'
+      });
+    }
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    // Add new FAQ to the product's faqs array
+    product.faqs.push({ q: question, a: answer });
+    await product.save();
+
+    res.json({
+      success: true,
+      message: 'FAQ added successfully',
+      faq: { q: question, a: answer }
+    });
+  } catch (error) {
+    console.error('Error adding FAQ:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error adding FAQ'
     });
   }
 }));
@@ -553,16 +604,19 @@ router.delete('/:id', asyncHandler(async (req, res) => {
       return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    // Delete associated images from Cloudinary
-    if (product.images && product.images.length > 0) {
-      for (const imageUrl of product.images) {
-        if (imageUrl.includes('cloudinary')) {
-          try {
-            const publicId = imageUrl.split('/').pop().split('.')[0];
-            await cloudinary.uploader.destroy(publicId);
-          } catch (cloudinaryError) {
-            console.error('Error deleting image from Cloudinary:', cloudinaryError);
-          }
+    // Delete associated images and certificates from Cloudinary
+    const allMedia = [
+      ...(product.images || []),
+      ...(product.certifications || []).map(cert => cert.src)
+    ];
+
+    for (const mediaUrl of allMedia) {
+      if (mediaUrl && mediaUrl.includes('cloudinary')) {
+        try {
+          const publicId = mediaUrl.split('/').pop().split('.')[0];
+          await cloudinary.uploader.destroy(publicId);
+        } catch (cloudinaryError) {
+          console.error('Error deleting media from Cloudinary:', cloudinaryError);
         }
       }
     }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const API_URL = 'http://localhost:3001/api/certificates';
+const API_URL = '/api/certificates';
 
 import AdminBottomNav from './AdminBottomNav';
 
@@ -14,9 +14,7 @@ const AdminCertificate = () => {
   const fetchCertificates = async () => {
     setLoading(true);
     try {
-      const res = await fetch(API_URL, {
-        credentials: 'include'
-      });
+      const res = await fetch(API_URL);
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
@@ -87,8 +85,7 @@ const AdminCertificate = () => {
       
       const response = await fetch(url, {
         method,
-        body: formData,
-        credentials: 'include'
+        body: formData
       });
       
       const data = await response.json();
@@ -119,9 +116,8 @@ const AdminCertificate = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/delete/${id}`, { 
-        method: 'DELETE',
-        credentials: 'include'
+      const response = await fetch(`${API_URL}/delete/${id}`, {
+        method: 'DELETE'
       });
       
       const data = await response.json();
