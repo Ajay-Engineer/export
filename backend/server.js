@@ -137,7 +137,7 @@ mongoose.connection.once('open', () => {
     console.log(`Server running on port ${PORT}`);
   });
 });
-}
+
 
 mongoose.connection.on('error', (err) => {
   console.error('MongoDB connection error:', err);
