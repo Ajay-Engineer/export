@@ -66,7 +66,6 @@ function App() {
             <Route path="/products/coir" element={<CoirProducts />} />
             <Route path="/products/category" element={<ProductCategory />} />
             <Route path="/products/subcategory" element={<ProductSubcategory />} />
-            <Route path="/products/:productId" element={<ProductDetailPage />} />
             <Route 
               path="/admin/add" 
               element={
