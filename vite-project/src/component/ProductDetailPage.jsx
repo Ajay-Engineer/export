@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Download, Mail, CheckCircle } from "lucide-react";
-import axios from 'axios';
-
+import { Download, Mail, CheckCircle, Plus } from "lucide-react";
+import axios from "axios";
 
 const NAV = [
   { id: "about", label: "About" },
@@ -10,6 +9,7 @@ const NAV = [
   { id: "specs", label: "Specs" },
   { id: "pack", label: "Packaging" },
   { id: "certs", label: "Certifications" },
+  { id: "faqs", label: "FAQs" },
 ];
 
 const fadeIn = {
@@ -17,120 +17,41 @@ const fadeIn = {
   visible: { opacity: 1, y: 0 },
 };
 
-function CertificateImage({ certId, certTitle, fallbackImage }) {
-  const [certData, setCertData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCertificate = async () => {
-      try {
-        setIsLoading(true);
-        if (certId) {
-          const response = await axios.get(`http://localhost:3001/api/certificates/${certId}`);
-          if (response.data) {
-            setCertData(response.data);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching certificate:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCertificate();
-  }, [certId]);
-
-  if (isLoading) {
-    return (
-      <div className="h-48 w-48 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
-        <span className="text-gray-400">Loading...</span>
-      </div>
-    );
-  }
-
-  const imgSrc = certData && certData.image ? certData.image : fallbackImage;
-
-  if (!imgSrc) {
-    return null;
-  }
-
-  return (
-    <div className="relative group bg-white rounded-lg shadow-lg p-4 hover:shadow-xl transition-all duration-300">
-      <img
-        src={imgSrc}
-        alt={`${certTitle} Certificate`}
-        className="w-full h-64 object-contain rounded-lg transition-transform duration-300 group-hover:scale-105"
-        onError={(e) => {
-          console.error('Certificate image load error:', {
-            certId,
-            url: imgSrc
-          });
-          if (e.target instanceof HTMLImageElement) {
-            e.target.src = 'https://res.cloudinary.com/dxixoivs7/image/upload/v1/placeholder-certificate.png';
-          }
-        }}
-        loading="lazy"
-      />
-      <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
-        <p className="text-white text-center font-medium p-4">
-          {certTitle}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function ProductDetailPage({
+  _id,
   title,
   images = [],
   mainImage = null,
   description,
+  faqs = [],
   benefits = [],
   specifications = {},
   packaging = [],
   certifications = [],
   videoUrl,
   datasheetUrl,
+  isEditing = false
 }) {
   const [active, setActive] = useState(NAV[0].id);
+  const [showBenefitForm, setShowBenefitForm] = useState(false);
+  const [showFaqForm, setShowFaqForm] = useState(false);
+  const [newBenefit, setNewBenefit] = useState({ title: '', description: '' });
+  const [newFaq, setNewFaq] = useState({ question: '', answer: '' });
   
+  // Debug log for benefits
   useEffect(() => {
-    // Debug log to check certifications data
-    console.log('Certifications received:', certifications);
-  }, [certifications]);
+    console.log('Benefits received:', benefits);
+  }, [benefits]);
 
-  // Convert backend-relative image paths to absolute URLs when needed
   const formatImageUrl = (img) => {
-    if (!img) {
-      console.debug('No image URL provided');
-      return 'https://res.cloudinary.com/dxixoivs7/image/upload/v1/placeholder-certificate.png';
-    }
+    if (!img) return null;
+    if (typeof img !== 'string') return img;
+    if (img.startsWith('http')) return img;
 
-    if (typeof img !== 'string') {
-      console.debug('Non-string image value:', img);
-      return img;
-    }
-    
-    console.debug('Processing image URL:', img);
-    
-    // If it's already a full Cloudinary URL, return as is
-    if (img.startsWith('http')) {
-      console.debug('Using full URL:', img);
-      return img;
-    }
-    
-    // Check if it's a Cloudinary public_id
-    if (img.startsWith('certificates/') || img.includes('/certificates/')) {
-      const cloudinaryUrl = `https://res.cloudinary.com/dxixoivs7/image/upload/${img.replace(/^\/+/, '')}`;
-      console.debug('Generated Cloudinary URL:', cloudinaryUrl);
-      return cloudinaryUrl;
-    }
-
-    // For legacy/local URLs
-    const baseUrl = process.env.NODE_ENV === 'production'
+    // @ts-ignore
+    const baseUrl = import.meta.env?.MODE === 'production'
       ? 'https://rebecca-exim-api.herokuapp.com'
-      : 'http://localhost:3001';
+      : import.meta.env?.VITE_API_BASE_URL || '';
 
     // ensure leading slash
     return img.startsWith('/') ? `${baseUrl}${img}` : `${baseUrl}/${img}`;
@@ -175,17 +96,17 @@ export default function ProductDetailPage({
         </div>
         <div className="w-full max-w-[1440px] mx-auto px-6">
           <div className="flex space-x-6 overflow-x-auto py-2">
-            {NAV.map((nav) => (
+            {NAV.map((navItem) => (
               <a
-                key={nav.id}
-                href={`#${nav.id}`}
+                key={navItem.id}
+                href={`#${navItem.id}`}
                 className={`text-sm font-medium whitespace-nowrap ${
-                  active === nav.id
+                  active === navItem.id
                     ? "text-red-600 border-b-2 border-red-600"
                     : "text-gray-600 hover:text-red-600"
                 }`}
               >
-                {nav.label}
+                {navItem.label}
               </a>
             ))}
           </div>
@@ -244,7 +165,73 @@ export default function ProductDetailPage({
         whileInView="visible"
       >
         <div className="max-w-[1440px] mx-auto px-6">
-          <h2 className="text-2xl font-semibold mb-6 text-center">Key Benefits</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Key Benefits</h2>
+            {isEditing && (
+              <button
+                onClick={() => setShowBenefitForm(true)}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4" /> Add Benefit
+              </button>
+            )}
+          </div>
+
+          {showBenefitForm && (
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const response = await axios.post(
+                    `${import.meta.env.VITE_API_BASE_URL}/api/products/${_id}/benefits`,
+                    newBenefit
+                  );
+                  if (response.data.success) {
+                    window.location.reload();
+                    setShowBenefitForm(false);
+                  }
+                } catch (error) {
+                  console.error('Error adding benefit:', error);
+                }
+              }}
+              className="mb-6 bg-white p-4 rounded-lg shadow"
+            >
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Benefit Title</label>
+                  <input
+                    type="text"
+                    value={newBenefit.title}
+                    onChange={(e) => setNewBenefit({ ...newBenefit, title: e.target.value })}
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    value={newBenefit.description}
+                    onChange={(e) => setNewBenefit({ ...newBenefit, description: e.target.value })}
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
+                    Save Benefit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowBenefitForm(false)}
+                    className="bg-gray-500 text-white px-4 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {benefits.map((b, i) => (
               <div
@@ -252,41 +239,179 @@ export default function ProductDetailPage({
                 className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition"
               >
                 <CheckCircle className="w-6 h-6 text-red-600 mb-2" />
-                <h4 className="font-semibold mb-1">{b.title}</h4>
-                <p className="text-gray-700">{b.description}</p>
+                <h4 className="font-semibold mb-1">{b.title || 'Benefit'}</h4>
+                <p className="text-gray-700">{b.description || 'No description available'}</p>
               </div>
             ))}
           </div>
         </div>
       </motion.section>
 
-      {/* Certifications Section */}
+              
       <motion.section
-        id="certs"
+        id="specs"
         className="w-full bg-white py-12 px-0"
         variants={fadeIn}
         initial="hidden"
         whileInView="visible"
       >
         <div className="max-w-[1440px] mx-auto px-6">
-          <h2 className="text-2xl font-semibold mb-6 text-center">Certifications</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {certifications.map((cert, i) => {
-              const certTitle = cert.title || cert.name || "Certificate";
-              const imageUrl = cert.image || formatImageUrl(cert.image);
+          <h2 className="text-2xl font-semibold mb-6">Product Specifications</h2>
+          <table className="w-full table-auto border border-gray-300 rounded-lg overflow-hidden">
+            <tbody>
+              {Object.entries(specifications).map(([label, val], idx) => (
+                <tr
+                  key={label}
+                  className={idx % 2 === 0 ? "bg-[#f8f9fb]" : "bg-white"}
+                >
+                  <th className="text-left px-4 py-3 font-medium border-r border-gray-200 bg-[#f2f4f8] text-gray-800">
+                    {label}
+                  </th>
+                  <td className="px-4 py-3 text-gray-900">{val}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </motion.section>
 
-              return (
-                <CertificateImage
-                  key={cert._id || i}
-                  certId={cert._id}
-                  certTitle={certTitle}
-                  fallbackImage={imageUrl}
-                />
-              );
-            })}
+      {/* Packaging */}
+      <motion.section
+        id="pack"
+        className="w-full bg-[#f9fafa] py-12 px-0"
+        variants={fadeIn}
+        initial="hidden"
+        whileInView="visible"
+      >
+        <div className="max-w-[1440px] mx-auto px-6">
+          <h2 className="text-2xl font-semibold mb-6">Packaging Standards</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {packaging.map((pkg, i) => (
+              <div
+                key={i}
+                className="p-6 bg-white rounded-lg shadow hover:shadow-md transition"
+              >
+                <h4 className="font-semibold mb-2">{pkg.title}</h4>
+                <p className="text-gray-700">{pkg.content}</p>
+              </div>
+            ))}
           </div>
         </div>
       </motion.section>
+
+      {/* FAQs Section */}
+      <motion.section
+        id="faqs"
+        className="w-full bg-[#fff] py-12 px-0"
+        variants={fadeIn}
+        initial="hidden"
+        whileInView="visible"
+      >
+        <div className="max-w-[1440px] mx-auto px-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Frequently Asked Questions</h2>
+            {isEditing && (
+              <button
+                onClick={() => setShowFaqForm(true)}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4" /> Add FAQ
+              </button>
+            )}
+          </div>
+
+          {showFaqForm && (
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const response = await axios.post(
+                    `${import.meta.env.VITE_API_BASE_URL}/api/products/${_id}/faqs`,
+                    newFaq
+                  );
+                  if (response.data.success) {
+                    window.location.reload();
+                    setShowFaqForm(false);
+                  }
+                } catch (error) {
+                  console.error('Error adding FAQ:', error);
+                }
+              }}
+              className="mb-6 bg-white p-4 rounded-lg shadow"
+            >
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Question</label>
+                  <input
+                    type="text"
+                    value={newFaq.question}
+                    onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Answer</label>
+                  <textarea
+                    value={newFaq.answer}
+                    onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
+                    Save FAQ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowFaqForm(false)}
+                    className="bg-gray-500 text-white px-4 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          <div className="space-y-4">
+            {faqs.map((faq, i) => (
+              <div key={i} className="bg-gray-50 rounded-lg p-6">
+                <h3 className="font-semibold text-lg mb-2">{faq.question}</h3>
+                <p className="text-gray-700">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Certifications */}
+      {certifications && certifications.length > 0 && (
+        <motion.section
+          id="certs"
+          className="w-full bg-white py-12 px-0"
+          variants={fadeIn}
+          initial="hidden"
+          whileInView="visible"
+        >
+          <div className="max-w-[1440px] mx-auto px-6">
+            <h2 className="text-2xl font-semibold mb-6">Certifications</h2>
+            <div className="flex gap-6 overflow-x-auto snap-x pb-4">
+              {certifications.map((cert, i) => (
+                <div key={i} className="snap-center flex-shrink-0">
+                  <img
+                    src={formatImageUrl(cert.image || cert.src)}
+                    alt={cert.name || cert.alt || 'Certification'}
+                    className="h-16 object-contain hover:scale-110 transition-transform cursor-pointer"
+                    onClick={() => window.open(formatImageUrl(cert.image || cert.src), '_blank')}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+      )}
 
       {/* Contact CTA */}
       <section
