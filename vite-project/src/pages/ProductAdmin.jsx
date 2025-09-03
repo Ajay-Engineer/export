@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../axios/axios.config';
 
 const ProductAdmin = () => {
   const [products, setProducts] = useState([]);
@@ -20,7 +20,7 @@ const ProductAdmin = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${baseURL}/api/products`);
+      const response = await axiosInstance.get('/api/products');
       setProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -45,7 +45,7 @@ const ProductAdmin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formDataToSend = new FormData();
-    
+
     formDataToSend.append('name', formData.name);
     formDataToSend.append('description', formData.description);
     formDataToSend.append('price', formData.price);
@@ -55,9 +55,9 @@ const ProductAdmin = () => {
 
     try {
       if (editingId) {
-        await axios.put(`${baseURL}/api/products/${editingId}`, formDataToSend);
+        await axiosInstance.put(`/api/products/${editingId}`, formDataToSend);
       } else {
-        await axios.post(`${baseURL}/api/products`, formDataToSend);
+        await axiosInstance.post('/api/products', formDataToSend);
       }
       fetchProducts();
       resetForm();
@@ -79,7 +79,7 @@ const ProductAdmin = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`${baseURL}/api/products/${id}`);
+        await axiosInstance.delete(`/api/products/${id}`);
         fetchProducts();
       } catch (error) {
         console.error('Error deleting product:', error);

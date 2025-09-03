@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Download, Mail, CheckCircle, Plus } from "lucide-react";
-import axios from "axios";
+import axiosInstance from "../axios/axios.config";
 
 const NAV = [
   { id: "about", label: "About" },
@@ -255,12 +255,12 @@ export default function ProductDetailPage({
           </div>
 
           {showBenefitForm && (
-            <form 
+            <form
               onSubmit={async (e) => {
                 e.preventDefault();
                 try {
-                  const response = await axios.post(
-                    `${import.meta.env.VITE_API_BASE_URL}/api/products/${_id}/benefits`,
+                  const response = await axiosInstance.post(
+                    `/api/products/${_id}/benefits`,
                     newBenefit
                   );
                   if (response.data.success) {
@@ -398,12 +398,12 @@ export default function ProductDetailPage({
           </div>
 
           {showFaqForm && (
-            <form 
+            <form
               onSubmit={async (e) => {
                 e.preventDefault();
                 try {
-                  const response = await axios.post(
-                    `${import.meta.env.VITE_API_BASE_URL}/api/products/${_id}/faqs`,
+                  const response = await axiosInstance.post(
+                    `/api/products/${_id}/faqs`,
                     newFaq
                   );
                   if (response.data.success) {

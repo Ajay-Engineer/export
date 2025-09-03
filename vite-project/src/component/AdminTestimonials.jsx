@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
+import axiosInstance from '../axios/axios.config';
 
 import AdminBottomNav from './AdminBottomNav';
 
@@ -21,9 +22,8 @@ const AdminTestimonials = () => {
 
   const fetchTestimonials = async () => {
     try {
-      const response = await fetch('/api/testimonials');
-      if (!response.ok) throw new Error('Failed to fetch testimonials');
-      const { data } = await response.json();
+      const response = await axiosInstance.get('/api/testimonials');
+      const { data } = response.data;
       setTestimonials(data || []);
     } catch (error) {
       console.error('Error:', error);
@@ -44,36 +44,21 @@ const AdminTestimonials = () => {
     }
 
     try {
-      const url = editId 
+      const url = editId
         ? `/api/testimonials/${editId}`
         : '/api/testimonials';
-      
-      const method = editId ? 'PATCH' : 'POST';
-      
+
       console.log('Submitting form data:', {
         url,
-        method,
         formData: Object.fromEntries(formDataObj.entries())
       });
-      
-      const response = await fetch(url, {
-        method,
-        body: formDataObj,
-        credentials: 'include',
-        headers: {
-          // Don't set Content-Type header when sending FormData
-          // The browser will set it automatically with the correct boundary
-          'Accept': 'application/json',
-        }
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to save testimonial');
-      }
+      const response = editId
+        ? await axiosInstance.patch(url, formDataObj)
+        : await axiosInstance.post(url, formDataObj);
 
-      const result = await response.json();
-      console.log('Testimonial saved successfully:', result);
-      
+      console.log('Testimonial saved successfully:', response.data);
+
       // Reset form
       setFormData({
         name: '',
@@ -84,7 +69,7 @@ const AdminTestimonials = () => {
       });
       setImagePreview('');
       setEditId(null);
-      
+
       // Refresh testimonials list
       fetchTestimonials();
     } catch (error) {
@@ -117,18 +102,7 @@ const AdminTestimonials = () => {
     }
 
     try {
-      const response = await fetch(`/api/testimonials/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Accept': 'application/json'
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete testimonial');
-      }
-
+      await axiosInstance.delete(`/api/testimonials/${id}`);
       console.log('Testimonial deleted successfully');
       fetchTestimonials();
     } catch (error) {

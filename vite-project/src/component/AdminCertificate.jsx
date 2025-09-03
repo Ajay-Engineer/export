@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import axiosInstance from '../axios/axios.config';
 
-const API_URL = '/api/certificates';
+const API_URL = '/certificates';
 
 import AdminBottomNav from './AdminBottomNav';
 
@@ -14,11 +15,8 @@ const AdminCertificate = () => {
   const fetchCertificates = async () => {
     setLoading(true);
     try {
-      const res = await fetch(API_URL);
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      const { success, data } = await res.json();
+      const res = await axiosInstance.get(API_URL);
+      const { success, data } = res.data;
       if (!success || !Array.isArray(data)) {
         throw new Error('Invalid response format');
       }
@@ -75,30 +73,26 @@ const AdminCertificate = () => {
         }
         formData.append('image', form.image);
       }
-      
+
       let url = `${API_URL}/add`;
-      let method = 'POST';
       if (editingId) {
         url = `${API_URL}/edit/${editingId}`;
-        method = 'PUT';
       }
-      
-      const response = await fetch(url, {
-        method,
-        body: formData
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
+
+      const response = editingId
+        ? await axiosInstance.put(url, formData)
+        : await axiosInstance.post(url, formData);
+
+      const data = response.data;
+
+      if (!data.success) {
         throw new Error(data.error || 'Failed to save certificate');
       }
-      
+
       // Reset form and refresh certificates
       setForm({ title: '', image: null });
       setEditingId(null);
       await fetchCertificates(); // Refresh the list
-      await fetchCertificates();
     } catch (error) {
       console.error('Error saving certificate:', error);
       setError(error.message || 'Failed to save certificate. Please try again.');
@@ -116,16 +110,14 @@ const AdminCertificate = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/delete/${id}`, {
-        method: 'DELETE'
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
+      const response = await axiosInstance.delete(`${API_URL}/delete/${id}`);
+
+      const data = response.data;
+
+      if (!data.success) {
         throw new Error(data.error || 'Failed to delete certificate');
       }
-      
+
       await fetchCertificates(); // Refresh the list
       setError(''); // Clear any existing errors
     } catch (error) {

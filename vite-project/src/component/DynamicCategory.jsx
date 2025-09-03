@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import axiosInstance from '../axios/axios.config';
 const CATEGORY_API = '/api/categories';
 const PRODUCT_API = '/api/products';
 
@@ -16,9 +17,8 @@ export default function DynamicCategory() {
       try {
         setLoading(true);
         // Fetch category details from backend
-        const catRes = await fetch(`${CATEGORY_API}`);
-        if (!catRes.ok) throw new Error('Failed to fetch categories');
-        const allCategories = await catRes.json();
+        const catRes = await axiosInstance.get(CATEGORY_API);
+        const allCategories = catRes.data;
         const found = allCategories.find(c => c.path === categoryPath);
         if (!found) {
           setError('Category not found');
@@ -28,9 +28,8 @@ export default function DynamicCategory() {
         setCategory(found);
 
         // Fetch products for this category from backend
-        const prodRes = await fetch(`${PRODUCT_API}`);
-        if (!prodRes.ok) throw new Error('Failed to fetch products');
-        const allProducts = await prodRes.json();
+        const prodRes = await axiosInstance.get(PRODUCT_API);
+        const allProducts = prodRes.data;
         const filtered = allProducts.filter(p => p.category === categoryPath);
         setProducts(filtered || []);
       } catch (error) {

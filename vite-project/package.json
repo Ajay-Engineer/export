@@ -32,6 +32,7 @@
     "react-router-dom": "^7.7.1",
     "tailwind-variants": "^2.0.1",
     "tailwindcss": "^4.1.11",
+    "terser": "^5.44.0",
     "three": "^0.178.0"
   },
   "devDependencies": {

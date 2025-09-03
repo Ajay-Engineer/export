@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 // Removed direct SQL client import. Use API calls only.
-const API_URL = '/api/categories';
 import { Loader2 } from 'lucide-react';
+import axiosInstance from '../axios/axios.config';
+const API_URL = '/api/categories';
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState([]);
@@ -21,9 +22,8 @@ export default function CategoryManagement() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error('Failed to fetch categories');
-        const data = await res.json();
+        const res = await axiosInstance.get(API_URL);
+        const data = res.data;
       setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -54,12 +54,7 @@ export default function CategoryManagement() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validatedCategory),
-      });
-      if (!res.ok) throw new Error('Failed to add category');
+      await axiosInstance.post(API_URL, validatedCategory);
       setNewCategory({ name: '', path: '', icon: '', description: '' });
       await fetchCategories();
     } catch (error) {
@@ -68,15 +63,6 @@ export default function CategoryManagement() {
     } finally {
       setLoading(false);
     }
-        // Add to backend
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(validatedCategory),
-        });
-        if (!res.ok) throw new Error('Failed to add category');
-        setNewCategory({ name: '', path: '', icon: '', description: '' });
-        await fetchCategories();
   };
 
   const handleUpdateCategory = async (categoryId, updatedData) => {
@@ -86,12 +72,7 @@ export default function CategoryManagement() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`${API_URL}/${categoryId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validatedCategory),
-      });
-      if (!res.ok) throw new Error('Failed to update category');
+      await axiosInstance.put(`${API_URL}/${categoryId}`, validatedCategory);
       await fetchCategories();
     } catch (error) {
       console.error('Error updating category:', error);
@@ -99,14 +80,6 @@ export default function CategoryManagement() {
     } finally {
       setLoading(false);
     }
-        // Update in backend
-        const res = await fetch(`${API_URL}/${categoryId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(validatedCategory),
-        });
-        if (!res.ok) throw new Error('Failed to update category');
-        await fetchCategories();
   };
 
   const handleDeleteCategory = async (categoryId, categoryPath) => {
@@ -117,8 +90,7 @@ export default function CategoryManagement() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`${API_URL}/${categoryId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete category');
+      await axiosInstance.delete(`${API_URL}/${categoryId}`);
       await fetchCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
@@ -126,11 +98,6 @@ export default function CategoryManagement() {
     } finally {
       setLoading(false);
     }
-        // Delete from backend
-        const res = await fetch(`${API_URL}/${categoryId}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Failed to delete category');
-        // Optionally: delete all products in this category via backend if needed
-        await fetchCategories();
   };
 
   return (
@@ -206,7 +173,7 @@ export default function CategoryManagement() {
               value={newCategory.description}
               onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-              rows="3"
+              rows={3}
               placeholder="Category description"
             />
           </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import axios from "axios";
+import axiosInstance from "../axios/axios.config";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "./Productclass";
 import ProductDetailPage from "./ProductDetailPage";
@@ -15,7 +15,7 @@ const ProductList = ({ category, title, description }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/api/products/category/${category}`);
+        const response = await axiosInstance.get(`/api/products/category/${category}`);
         if (response.data && Array.isArray(response.data.products)) {
           setProducts(response.data.products);
         } else {

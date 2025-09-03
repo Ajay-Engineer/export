@@ -1,7 +1,6 @@
-import react from 'react';
-import { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React from 'react';
+import axiosInstance from '../axios/axios.config';
 
 const CertificatesSection = () => {
   const scrollRef = useRef(null);
@@ -11,10 +10,9 @@ const CertificatesSection = () => {
   useEffect(() => {
     const fetchCertificates = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/certificates');
-        if (!response.ok) throw new Error('Failed to fetch certificates');
-        const data = await response.json();
-        
+        const response = await axiosInstance.get('/certificates');
+        const data = response.data;
+
         if (data.success && Array.isArray(data.data)) {
           setCertificates(data.data);
         } else {
@@ -43,7 +41,7 @@ const CertificatesSection = () => {
   };
 
   return (
-    <section className="w-full bg-[rgba(91,92,88,0.5)] py-12 px-4 relative">
+    <section className="w-full bg-[rgba(91,92,88,0.5)] py-12 px-4 relative pl-10">
       {/* Heading */}
       <h2
         className="text-3xl sm:text-4xl font-bold text-black underline text-center mb-10"

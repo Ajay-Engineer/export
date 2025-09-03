@@ -101,87 +101,126 @@ const TestimonialsSection = () => {
 
   return (
     <section
-      className="w-full py-16 px-4 text-white"
+      className="relative w-full py-6 md:py-12 lg:py-16 px-4 overflow-hidden"
       style={{
-        background:
-          "url('https://api.builder.io/api/v1/image/assets/TEMP/b1a62d96b6d247000ac091ea08e7b1c79a2e785f?width=2880') center/cover no-repeat, #606163",
+        background: `url('https://api.builder.io/api/v1/image/assets/TEMP/11ff832bc261c20f5a9163fb10ae63a0268aef7b?width=2880') center/cover no-repeat, #6A6B6D`
       }}
     >
-      <h2 className="text-3xl sm:text-4xl font-bold underline text-center mb-12 font-sans">
-        What Global Clients Say
-      </h2>
 
-      {/* Desktop View - Show all */}
-      <div className="hidden md:grid grid-cols-2 gap-10 max-w-7xl mx-auto">
-        {testimonials.map((testimonial, index) => (
-          console.log('Rendering testimonial:', testimonial), // Debug log
-          <div
-            key={index}
-            className="bg-white text-black rounded-lg p-6 flex flex-col md:flex-row shadow-lg"
-          >
-            <img
-              src={testimonial.image.startsWith('http') 
-                ? testimonial.image 
-                : `http://localhost:3001${testimonial.image}`}
-              alt={testimonial.name}
-              className="w-28 h-28 md:w-36 md:h-36 rounded-lg object-cover mb-4 md:mb-0 md:mr-6"
-              onError={(e) => {
-                if (e.target instanceof HTMLImageElement) {
-                  e.target.onerror = null;
-                  e.target.src = '/placeholder-image.jpg';
-                }
-              }}
-            />
-            <div>
-              <h3 className="text-2xl font-semibold mb-1">
-                {testimonial.name}
-                
-              </h3>
-              <span className="text-lg font-semibold">{testimonial.companyName}, {testimonial.country}</span> 
-              <p className="text-lg">{testimonial.quote}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Mobile View - One testimonial with nav */}
-      <div className="md:hidden max-w-md mx-auto">
-        <div className="bg-white text-black rounded-lg p-6 flex flex-col items-center shadow-lg">
-          <img
-            src={testimonials[currentIndex].image.startsWith('http') 
-              ? testimonials[currentIndex].image 
-              : `http://localhost:3001${testimonials[currentIndex].image}`}
-            alt={testimonials[currentIndex].name}
-            className="w-24 h-24 rounded-lg object-cover mb-4"
-            onError={(e) => {
-              if (e.target instanceof HTMLImageElement) {
-                e.target.onerror = null;
-                e.target.src = '/placeholder-image.jpg';
-              }
-            }}
-          />
-          <h3 className="text-lg font-semibold mb-2 text-center">
-            {testimonials[currentIndex].name}
-          </h3>
-          <p className="text-center text-base">
-            {testimonials[currentIndex].quote}
+      <div className="relative z-10 max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-4 md:mb-8 lg:mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
+            Client Testimonials
+          </h2>
+          <p className="text-sm md:text-base text-blue-100 max-w-lg mx-auto leading-relaxed">
+            Hear what our global clients have to say about their experience
           </p>
+          <div className="w-12 h-1 bg-gradient-to-r from-blue-400 to-purple-500 mx-auto mt-3 rounded-full"></div>
         </div>
 
-        {/* Navigation */}
-        <div className="mt-6 flex justify-center gap-6">
-          <button
-            onClick={showPrevious}
-            className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center hover:bg-gray-600"
-          >
-            <ChevronLeft className="text-white" />
-          </button>
-          <button
-            onClick={showNext}
-            className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center hover:bg-gray-600"
-          >
-            <ChevronRight className="text-white" />
-          </button>
+        {/* Testimonial Card */}
+        <div className="max-w-4xl mx-auto">
+          <div className="relative">
+            {/* Main Card */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 md:p-8 border border-white/20">
+              <div className="flex flex-col lg:flex-row items-center gap-6">
+                {/* Profile Image */}
+                <div className="relative">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-gradient-to-r from-red-600 to-red-800 shadow-lg bg-gradient-to-br from-red-100 to-gray-800">
+                    <img
+                      src={testimonials[currentIndex].image.startsWith('http')
+                        ? testimonials[currentIndex].image
+                        : `http://localhost:3001${testimonials[currentIndex].image}`}
+                      alt={testimonials[currentIndex].name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        if (e.target instanceof HTMLImageElement) {
+                          e.target.onerror = null;
+                          e.target.src = '/placeholder-image.jpg';
+                        }
+                      }}
+                    />
+                  </div>
+                  {/* Decorative ring */}
+                  <div className="absolute -inset-1 rounded-full border-2 border-red-500/40"></div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 text-center lg:text-left">
+                  {/* Quote Icon */}
+                  <div className="mb-4">
+                    <svg className="w-8 h-8 text-blue-500 mx-auto lg:mx-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z"/>
+                    </svg>
+                  </div>
+
+                  {/* Quote */}
+                  <blockquote className="text-lg md:text-xl text-gray-800 leading-relaxed mb-6 font-medium">
+                    "{testimonials[currentIndex].quote}"
+                  </blockquote>
+
+                  {/* Author Info */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                      {testimonials[currentIndex].name}
+                    </h3>
+                    <p className="text-base text-blue-600 font-medium">
+                      {testimonials[currentIndex].companyName}
+                    </p>
+                    <p className="text-sm text-gray-500 uppercase tracking-wide">
+                      {testimonials[currentIndex].country}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex justify-center items-center gap-6 mt-8">
+              <button
+                onClick={showPrevious}
+                className="group relative w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30"
+              >
+                <ChevronLeft className="text-white w-5 h-5 group-hover:scale-110 transition-transform" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+              </button>
+
+              {/* Progress Indicators */}
+              <div className="flex gap-2">
+                {testimonials.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`relative transition-all duration-300 ${
+                      index === currentIndex
+                        ? 'w-6 h-2 bg-white shadow-lg'
+                        : 'w-2 h-2 bg-white/40 hover:bg-white/60'
+                    } rounded-full`}
+                  >
+                    {index === currentIndex && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full"></div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={showNext}
+                className="group relative w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30"
+              >
+                <ChevronRight className="text-white w-5 h-5 group-hover:scale-110 transition-transform" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+              </button>
+            </div>
+
+            {/* Counter */}
+            <div className="text-center mt-4">
+              <span className="text-white/70 text-sm font-medium">
+                {currentIndex + 1} of {testimonials.length}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

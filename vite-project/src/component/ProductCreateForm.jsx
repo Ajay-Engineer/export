@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import PropTypes from 'prop-types';
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../axios/axios.config";
-import axios from 'axios';
 
 const categories = [
   { name: "Herbal Extract Products", value: "herbal" },
