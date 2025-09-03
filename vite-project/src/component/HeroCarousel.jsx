@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import React from "react";
 
 import Rebecca_Hom_image_1 from "../assets/Rebecca_Hom_image_1.png";
 import Rebecca_Hom_image_2 from "../assets/Rebecca_Hom_image_2.png";
