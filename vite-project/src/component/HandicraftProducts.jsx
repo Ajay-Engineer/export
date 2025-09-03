@@ -34,7 +34,11 @@ const HandicraftProducts = () => {
       {/* Content Section */}
       <div className="max-w-6xl mx-auto px-4 py-16">
         {/* Product List Component */}
-        <ProductList category="handicraft" />
+        <ProductList
+          category="handicraft"
+          title="Handicrafts"
+          description="Beautiful handcrafted items and artisanal products"
+        />
 
         {/* Back to Menu Button */}
         <div className="flex justify-center mt-12">

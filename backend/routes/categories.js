@@ -3,35 +3,32 @@ const router = express.Router();
 
 // Predefined categories (same as in product routes)
 const VALID_CATEGORIES = [
-  'herbal',
-  'palm-jaggery',
-  'coir',
-  'tea',
   'health-mix',
+  'egg',
   'handicraft',
-  'egg'
+  'decor-items',
+  'home-textile',
+  'bamboo-products'
 ];
 
 // Category icons mapping
 const CATEGORY_ICONS = {
-  'herbal': 'Leaf',
-  'palm-jaggery': 'CakeSlice',
-  'coir': 'Flower2',
-  'tea': 'Coffee',
   'health-mix': 'HeartPulse',
+  'egg': 'Egg',
   'handicraft': 'Hand',
-  'egg': 'Egg'
+  'decor-items': 'Sparkles',
+  'home-textile': 'Home',
+  'bamboo-products': 'Leaf'
 };
 
 // Category descriptions
 const CATEGORY_DESCRIPTIONS = {
-  'herbal': 'Natural herbal products and remedies',
-  'palm-jaggery': 'Traditional palm jaggery and palm products',
-  'coir': 'Coconut coir products and fibers',
-  'tea': 'Premium tea varieties and blends',
-  'health-mix': 'Nutritious health mix products',
-  'handicraft': 'Handcrafted items and artisanal products',
-  'egg': 'Fresh egg products and poultry items'
+  'health-mix': 'Nutritious health mix products for daily wellness',
+  'egg': 'Quality egg products and poultry items',
+  'handicraft': 'Beautiful handcrafted items and artisanal products',
+  'decor-items': 'Elegant decorative items and home accessories',
+  'home-textile': 'Premium home textile products and fabrics',
+  'bamboo-products': 'Eco-friendly bamboo products and sustainable goods'
 };
 
 // Get all categories

@@ -7,13 +7,12 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Leaf,
-  CakeSlice,
-  Flower2,
-  Coffee,
   HeartPulse,
-  Hand,
   Egg,
+  Hand,
+  Sparkles,
+  Home,
+  Leaf,
   Package,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -34,29 +33,14 @@ export default function Header() {
 
   const productCategories = [
     {
-      name: "Herbal Extract Products",
-      path: "/products/herbal",
-      icon: <Leaf className="w-4 h-4 text-red-600" />,
-    },
-    {
-      name: "Palm Jaggery Products",
-      path: "/products/palm-jaggery",
-      icon: <CakeSlice className="w-4 h-4 text-red-600" />,
-    },
-    {
-      name: "Coir Products",
-      path: "/products/coir",
-      icon: <Flower2 className="w-4 h-4 text-red-600" />,
-    },
-    {
-      name: "Tea Varieties",
-      path: "/products/tea",
-      icon: <Coffee className="w-4 h-4 text-red-600" />,
-    },
-    {
       name: "Health Mix",
       path: "/products/health-mix",
       icon: <HeartPulse className="w-4 h-4 text-red-600" />,
+    },
+    {
+      name: "Egg Products",
+      path: "/products/egg",
+      icon: <Egg className="w-4 h-4 text-red-600" />,
     },
     {
       name: "Handicrafts",
@@ -64,9 +48,19 @@ export default function Header() {
       icon: <Hand className="w-4 h-4 text-red-600" />,
     },
     {
-      name: "Egg Products",
-      path: "/products/egg",
-      icon: <Egg className="w-4 h-4 text-red-600" />,
+      name: "Decor Items",
+      path: "/products/decor-items",
+      icon: <Sparkles className="w-4 h-4 text-red-600" />,
+    },
+    {
+      name: "Home Textile",
+      path: "/products/home-textile",
+      icon: <Home className="w-4 h-4 text-red-600" />,
+    },
+    {
+      name: "Bamboo Products",
+      path: "/products/bamboo-products",
+      icon: <Leaf className="w-4 h-4 text-red-600" />,
     },
   ];
 

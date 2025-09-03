@@ -25,17 +25,17 @@ import RegionalSection from "./component/RegionalSection";
 import StatsSection from "./component/StatsSection";
 import TestimonialsSection from "./component/TestimonialsSection";
 import WhyChooseUs from "./component/WhyChooseUs";
-import TeaProducts from "./component/TeaProducts";
-import PalmJaggeryProducts from "./component/PalmJaggeryProducts";
 import EggProducts from "./component/EggProducts";
 import HealthMixProducts from "./component/HealthMixProducts";
-import HerbalProducts from "./component/HerbalProducts.jsx";
 import HandicraftProducts from "./component/HandicraftProducts";
-import CoirProducts from "./component/CoirProducts";
+import DecorItemsProducts from "./component/DecorItemsProducts";
+import HomeTextileProducts from "./component/HomeTextileProducts";
+import BambooProducts from "./component/BambooProducts";
 import ProductCategory from "./component/ProductCategory";
 import ProductSubcategory from "./component/ProductSubcategory";
 import ProductDetailPage from "./component/ProductDetailPage";
-import ProductCreateForm from "./component/ProductCreateForm.jsx";
+import ProductCreateForm from "./component/ProductCreateForm";
+
 import Brand from "./component/Brand";
 import FAQ from "./component/FAQ";
 import AdminCertificate from "./component/AdminCertificate";
@@ -57,13 +57,12 @@ function App() {
             <Route path="/brand" element={<Brand />} />
             {/* Product Routes */}
             <Route path="/products" element={<ProductsPage />} />
-            <Route path="/products/tea" element={<TeaProducts />} />
-            <Route path="/products/palm-jaggery" element={<PalmJaggeryProducts />} />
-            <Route path="/products/egg" element={<EggProducts />} />
             <Route path="/products/health-mix" element={<HealthMixProducts />} />
-            <Route path="/products/herbal" element={<HerbalProducts />} />
+            <Route path="/products/egg" element={<EggProducts />} />
             <Route path="/products/handicraft" element={<HandicraftProducts />} />
-            <Route path="/products/coir" element={<CoirProducts />} />
+            <Route path="/products/decor-items" element={<DecorItemsProducts />} />
+            <Route path="/products/home-textile" element={<HomeTextileProducts />} />
+            <Route path="/products/bamboo-products" element={<BambooProducts />} />
             <Route path="/products/category" element={<ProductCategory />} />
             <Route path="/products/subcategory" element={<ProductSubcategory />} />
             <Route 

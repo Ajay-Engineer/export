@@ -15,7 +15,7 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['herbal', 'palm-jaggery', 'coir', 'tea', 'health-mix', 'handicraft', 'egg']
+    enum: ['health-mix', 'egg', 'handicraft', 'decor-items', 'home-textile', 'bamboo-products']
   },
   visibility: {
     type: String,

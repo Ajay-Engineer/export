@@ -34,7 +34,11 @@ const HealthMixProducts = () => {
       {/* Content Section */}
       <div className="max-w-6xl mx-auto px-4 py-16">
         {/* Product List Component */}
-        <ProductList category="health-mix" />
+        <ProductList
+          category="health-mix"
+          title="Health Mix"
+          description="Nutritious health mix products for daily wellness"
+        />
 
         {/* Back to Menu Button */}
         <div className="flex justify-center mt-12">

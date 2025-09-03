@@ -15,7 +15,7 @@ const ProductList = ({ category, title, description }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axiosInstance.get(`/api/products/category/${category}`);
+        const response = await axiosInstance.get(`products/category/${category}`);
         if (response.data && Array.isArray(response.data.products)) {
           setProducts(response.data.products);
         } else {

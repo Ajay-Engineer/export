@@ -4,13 +4,12 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../axios/axios.config";
 
 const categories = [
-  { name: "Herbal Extract Products", value: "herbal" },
-  { name: "Palm Jaggery Products", value: "palm-jaggery" },
-  { name: "Coir Products", value: "coir" },
-  { name: "Tea Varieties", value: "tea" },
   { name: "Health Mix", value: "health-mix" },
-  { name: "Handicrafts", value: "handicraft" },
   { name: "Egg Products", value: "egg" },
+  { name: "Handicrafts", value: "handicraft" },
+  { name: "Decor Items", value: "decor-items" },
+  { name: "Home Textile", value: "home-textile" },
+  { name: "Bamboo Products", value: "bamboo-products" },
 ];
 
 /** @type {React.FC<{ label: string }>} */

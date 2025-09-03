@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ProductList from "./ProductList";
 import { ArrowLeft, Menu } from "lucide-react";
 
-const EggProducts = () => {
+const HomeTextileProducts = () => {
   const navigate = useNavigate();
 
   return (
@@ -14,8 +14,8 @@ const EggProducts = () => {
         <div className="relative z-10 max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="text-left">
-              <h1 className="text-4xl font-bold text-white mb-2">Egg Products</h1>
-              <p className="text-xl text-red-100">Fresh egg-based products</p>
+              <h1 className="text-4xl font-bold text-white mb-2">Home Textile</h1>
+              <p className="text-xl text-red-100">Premium home textile products and fabrics</p>
             </div>
             <div className="flex items-center gap-3">
               <button onClick={() => navigate('/')} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-md" aria-label="Back to home">
@@ -35,9 +35,9 @@ const EggProducts = () => {
       <div className="max-w-6xl mx-auto px-4 py-16">
         {/* Product List Component */}
         <ProductList
-          category="egg"
-          title="Egg Products"
-          description="Quality egg products and poultry items"
+          category="home-textile"
+          title="Home Textile"
+          description="Premium home textile products and fabrics"
         />
 
         {/* Back to Menu Button */}
@@ -57,4 +57,4 @@ const EggProducts = () => {
   );
 };
 
-export default EggProducts;
+export default HomeTextileProducts;

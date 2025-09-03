@@ -16,13 +16,12 @@ cloudinary.config({
 
 // Product categories
 const VALID_CATEGORIES = [
-  'herbal',
-  'palm-jaggery',
-  'coir',
-  'tea',
   'health-mix',
+  'egg',
   'handicraft',
-  'egg'
+  'decor-items',
+  'home-textile',
+  'bamboo-products'
 ];
 
 // Configure Cloudinary storage

@@ -27,6 +27,7 @@ const ProductFormModal = ({ isEdit, product, onClose, onSubmit }) => {
         stock: product.stock,
         features: product.features || [],
         specifications: product.specifications || {},
+        images: product.images || []
       });
       setImagePreview(product.images.map(img => `http://localhost:3001${img}`));
     }
@@ -137,13 +138,12 @@ const ProductFormModal = ({ isEdit, product, onClose, onSubmit }) => {
                 required
               >
                 <option value="">Select Category</option>
-                <option value="herbal">Herbal Extract Products</option>
-                <option value="palm-jaggery">Palm Jaggery Products</option>
-                <option value="coir">Coir Products</option>
-                <option value="tea">Tea Varieties</option>
                 <option value="health-mix">Health Mix</option>
-                <option value="handicraft">Handicrafts</option>
                 <option value="egg">Egg Products</option>
+                <option value="handicraft">Handicrafts</option>
+                <option value="decor-items">Decor Items</option>
+                <option value="home-textile">Home Textile</option>
+                <option value="bamboo-products">Bamboo Products</option>
               </select>
             </div>
 

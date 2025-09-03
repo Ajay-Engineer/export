@@ -1,13 +1,13 @@
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { X, ArrowLeft } from "lucide-react";
 import {
-  Leaf,
-  CakeSlice,
-  Flower2,
-  Coffee,
   HeartPulse,
-  Hand,
   Egg,
+  Hand,
+  Sparkles,
+  Home,
+  Leaf,
 } from "lucide-react";
 
 export default function ProductsPage() {
@@ -15,46 +15,40 @@ export default function ProductsPage() {
 
   const products = [
     {
-      name: "Herbal Extract Products",
-      path: "/products/herbal",
-      icon: <Leaf className="w-8 h-8 text-red-600" />,
-      description: "Natural herbal extracts for health and wellness",
-    },
-    {
-      name: "Palm Jaggery Products",
-      path: "/products/palm-jaggery",
-      icon: <CakeSlice className="w-8 h-8 text-red-600" />,
-      description: "Traditional and healthy palm jaggery products",
-    },
-    {
-      name: "Coir Products",
-      path: "/products/coir",
-      icon: <Flower2 className="w-8 h-8 text-red-600" />,
-      description: "Eco-friendly coir-based products",
-    },
-    {
-      name: "Tea Varieties",
-      path: "/products/tea",
-      icon: <Coffee className="w-8 h-8 text-red-600" />,
-      description: "Premium tea varieties from the finest gardens",
-    },
-    {
       name: "Health Mix",
       path: "/products/health-mix",
       icon: <HeartPulse className="w-8 h-8 text-red-600" />,
       description: "Nutritious health mix products for daily wellness",
     },
     {
-      name: "Handicrafts",
-      path: "/products/handicraft",
-      icon: <Hand className="w-8 h-8 text-red-600" />,
-      description: "Beautiful handcrafted products",
-    },
-    {
       name: "Egg Products",
       path: "/products/egg",
       icon: <Egg className="w-8 h-8 text-red-600" />,
-      description: "Quality egg products",
+      description: "Quality egg products and poultry items",
+    },
+    {
+      name: "Handicrafts",
+      path: "/products/handicraft",
+      icon: <Hand className="w-8 h-8 text-red-600" />,
+      description: "Beautiful handcrafted items and artisanal products",
+    },
+    {
+      name: "Decor Items",
+      path: "/products/decor-items",
+      icon: <Sparkles className="w-8 h-8 text-red-600" />,
+      description: "Elegant decorative items and home accessories",
+    },
+    {
+      name: "Home Textile",
+      path: "/products/home-textile",
+      icon: <Home className="w-8 h-8 text-red-600" />,
+      description: "Premium home textile products and fabrics",
+    },
+    {
+      name: "Bamboo Products",
+      path: "/products/bamboo-products",
+      icon: <Leaf className="w-8 h-8 text-red-600" />,
+      description: "Eco-friendly bamboo products and sustainable goods",
     },
   ];
 

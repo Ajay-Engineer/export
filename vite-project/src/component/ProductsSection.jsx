@@ -1,28 +1,27 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRef } from 'react';
-
+import React ,{ useRef } from 'react';
 // Map product names to local asset images
-import herbalImg from '../assets/Rebecca_Hom_image_1.png';
+import herbalImg from '../assets/Rebecca_Hom_image_4.png';
 import healthMixImg from '../assets/Rebecca_Hom_image_2.png';
-import handicraftsImg from '../assets/Rebecca_Hom_image_3.png';
-import teaPowdersImg from '../assets/Rebecca_Hom_image_4.png';
+import handicraftsImg from '../assets/Rebecca_Hom_image_6.png';
+import teaPowdersImg from '../assets/Rebecca_Hom_image_5.png';
 
 const ProductsSection = () => {
   const products = [
     {
-      name: "Herbal Products",
+      name: "Health Mix",
       image: herbalImg
     },
     {
-      name: "Health Mix",
+      name: "Egg Products",
       image: handicraftsImg
     },
     {
       name: "Handicrafts",
-      image:  healthMixImg
+      image: healthMixImg
     },
     {
-      name: "Tea Powders",
+      name: "Decor Items",
       image: teaPowdersImg
     }
   ];

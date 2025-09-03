@@ -127,7 +127,7 @@ const TestimonialsSection = () => {
               <div className="flex flex-col lg:flex-row items-center gap-6">
                 {/* Profile Image */}
                 <div className="relative">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-gradient-to-r from-red-600 to-red-800 shadow-lg bg-gradient-to-br from-red-100 to-gray-800">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-red-500 shadow-lg bg-gradient-to-br from-red-100 to-red-200">
                     <img
                       src={testimonials[currentIndex].image.startsWith('http')
                         ? testimonials[currentIndex].image

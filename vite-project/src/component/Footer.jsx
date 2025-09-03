@@ -82,27 +82,9 @@ export default function Footer() {
           <h3 className="text-xl sm:text-2xl font-bold">Our Products</h3>
           <ul className="space-y-3 text-white/90">
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/coir" className="flex items-center space-x-3">
-                <FaCube className="text-white w-5 h-5" />
-                <span>Coir Products</span>
-              </a>
-            </li>
-            <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/tea" className="flex items-center space-x-3">
-                <FaMugHot className="text-white w-5 h-5" />
-                <span>Tea Varieties</span>
-              </a>
-            </li>
-            <li className="flex items-center space-x-3 hover:text-blue-400">
               <a href="/products/health-mix" className="flex items-center space-x-3">
                 <FaHeartbeat className="text-white w-5 h-5" />
                 <span>Health Mix</span>
-              </a>
-            </li>
-            <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/handicraft" className="flex items-center space-x-3">
-                <FaPaintBrush className="text-white w-5 h-5" />
-                <span>Handicrafts</span>
               </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
@@ -112,15 +94,27 @@ export default function Footer() {
               </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/herbal" className="flex items-center space-x-3">
-                <FaLeaf className="text-white w-5 h-5" />
-                <span>Herbal Extract Products</span>
+              <a href="/products/handicraft" className="flex items-center space-x-3">
+                <FaPaintBrush className="text-white w-5 h-5" />
+                <span>Handicrafts</span>
               </a>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/palm-jaggery" className="flex items-center space-x-3">
+              <a href="/products/decor-items" className="flex items-center space-x-3">
+                <FaCube className="text-white w-5 h-5" />
+                <span>Decor Items</span>
+              </a>
+            </li>
+            <li className="flex items-center space-x-3 hover:text-blue-400">
+              <a href="/products/home-textile" className="flex items-center space-x-3">
                 <FaPagelines className="text-white w-5 h-5" />
-                <span>Palm Jaggery Products</span>
+                <span>Home Textile</span>
+              </a>
+            </li>
+            <li className="flex items-center space-x-3 hover:text-blue-400">
+              <a href="/products/bamboo-products" className="flex items-center space-x-3">
+                <FaLeaf className="text-white w-5 h-5" />
+                <span>Bamboo Products</span>
               </a>
             </li>
           </ul>

@@ -75,7 +75,7 @@ const CertificatesSection = () => {
             certificates.map((certificate, index) => (
               <div
                 key={certificate._id || index}
-                className="min-w-[180px] sm:min-w-[240px] max-w-[180px] sm:max-w-[260px] bg-white rounded-lg shadow hover:shadow-xl transition-shadow duration-300"
+                className="group min-w-[180px] sm:min-w-[240px] max-w-[180px] sm:max-w-[260px] bg-white rounded-lg shadow hover:shadow-xl transition-shadow duration-300 relative"
               >
                 <img
                   src={certificate.image || '/placeholder-certificate.png'}
@@ -91,7 +91,9 @@ const CertificatesSection = () => {
                   }}
                 />
                 {certificate.title && (
-                  <div className="p-2 text-center font-semibold">{certificate.title}</div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent text-white text-center font-semibold p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-b-lg">
+                    {certificate.title}
+                  </div>
                 )}
               </div>
             ))
