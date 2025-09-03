@@ -42,7 +42,11 @@ const TeaProducts = () => {
       {/* Content Section */}
       <div className="max-w-6xl mx-auto px-4 py-16">
         {/* Product List Component */}
-        <ProductList category="tea" />
+        <ProductList
+          category="tea"
+          title="Tea Products"
+          description="Explore our premium collection of tea varieties."
+        />
 
         {/* Back to Menu Button */}
         <div className="flex justify-center mt-12">
