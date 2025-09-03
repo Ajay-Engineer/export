@@ -1,4 +1,4 @@
-  import React from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Menu } from "lucide-react";
 import ProductList from "../components/ProductList";

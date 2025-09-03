@@ -22,7 +22,7 @@ const AdminTestimonials = () => {
 
   const fetchTestimonials = async () => {
     try {
-      const response = await axiosInstance.get('/api/testimonials');
+      const response = await axiosInstance.get('/testimonials');
       const { data } = response.data;
       setTestimonials(data || []);
     } catch (error) {
@@ -45,8 +45,8 @@ const AdminTestimonials = () => {
 
     try {
       const url = editId
-        ? `/api/testimonials/${editId}`
-        : '/api/testimonials';
+        ? `/testimonials/${editId}`
+        : '/testimonials';
 
       console.log('Submitting form data:', {
         url,
@@ -102,7 +102,7 @@ const AdminTestimonials = () => {
     }
 
     try {
-      await axiosInstance.delete(`/api/testimonials/${id}`);
+      await axiosInstance.delete(`/testimonials/${id}`);
       console.log('Testimonial deleted successfully');
       fetchTestimonials();
     } catch (error) {
