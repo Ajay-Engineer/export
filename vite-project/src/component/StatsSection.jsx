@@ -16,7 +16,7 @@ const StatsSection = () => {
     },
     {
       number: "200+",
-      label: "Global Clients",
+      label: "Shipments Delivered",
       image:
         "https://api.builder.io/api/v1/image/assets/TEMP/d9ac938592a35765bdaac7213b8cbd4e6e4cf7ce?width=198",
     },

@@ -57,7 +57,7 @@ const CertificatesSection = () => {
         {certificates.length > 2 && (
           <button
             onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-500 hover:bg-gray-700 text-white p-2 rounded-full shadow-md"
+            className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-500 hover:bg-gray-700 text-white p-2 rounded-full shadow-md"
           >
             <ChevronLeft />
           </button>
@@ -67,7 +67,7 @@ const CertificatesSection = () => {
           ref={scrollRef}
           className={`flex ${
             certificates.length <= 2 ? 'justify-center' : 'overflow-x-scroll'
-          } no-scrollbar gap-6 px-10 scroll-smooth`}
+          } no-scrollbar gap-4 sm:gap-6 px-4 sm:px-10 scroll-smooth`}
         >
           {loading ? (
             <div className="w-full text-center py-8">Loading certificates...</div>
@@ -77,7 +77,7 @@ const CertificatesSection = () => {
             certificates.map((certificate, index) => (
               <div
                 key={certificate._id || index}
-                className="min-w-[240px] max-w-[260px] bg-white rounded-lg shadow hover:shadow-xl transition-shadow duration-300"
+                className="min-w-[180px] sm:min-w-[240px] max-w-[180px] sm:max-w-[260px] bg-white rounded-lg shadow hover:shadow-xl transition-shadow duration-300"
               >
                 <img
                   src={certificate.image || '/placeholder-certificate.png'}
@@ -103,7 +103,7 @@ const CertificatesSection = () => {
         {certificates.length > 2 && (
           <button
             onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-500 hover:bg-gray-700 text-white p-2 rounded-full shadow-md"
+            className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-500 hover:bg-gray-700 text-white p-2 rounded-full shadow-md"
           >
             <ChevronRight />
           </button>

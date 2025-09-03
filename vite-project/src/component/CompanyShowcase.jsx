@@ -1,4 +1,5 @@
 import React from "react";
+import s1 from "../assets/Rebecca_Exim_showcase.jpg";
 
 const CompanyShowcase = () => {
   // Define base URL and target widths for Builder.io images
@@ -31,8 +32,7 @@ const CompanyShowcase = () => {
         {/* Left Image Container */}
         <div className="w-full aspect-[3/2] md:aspect-video lg:aspect-[4/3] overflow-hidden rounded-lg shadow-md">
           <img
-            src={`${builderIoBaseUrl}${leftImageSrcId}?width=${leftImageWidths[0]}`}
-            srcSet={generateSrcset(leftImageSrcId, leftImageWidths)}
+            src={s1}
             sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
             alt="Company overview"
             className="w-full h-full object-cover md:object-cover lg:object-contain"
