@@ -95,7 +95,8 @@ const AdminCertificate = () => {
       await fetchCertificates(); // Refresh the list
     } catch (error) {
       console.error('Error saving certificate:', error);
-      setError(error.message || 'Failed to save certificate. Please try again.');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to save certificate. Please try again.';
+      setError(errorMessage);
     }
   };
 

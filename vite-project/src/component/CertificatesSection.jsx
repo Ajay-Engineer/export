@@ -41,7 +41,7 @@ const CertificatesSection = () => {
   };
 
   return (
-    <section className="w-full bg-[rgba(91,92,88,0.5)] py-12 px-4 relative pl-10">
+    <section className="w-full  bg-[rgba(91,92,88,0.5)] py-12 px-4 relative pl-10">
       {/* Heading */}
       <h2
         className="text-3xl sm:text-4xl font-bold text-black underline text-center mb-10"
@@ -80,7 +80,7 @@ const CertificatesSection = () => {
                 <img
                   src={certificate.image || '/placeholder-certificate.png'}
                   alt={certificate.title || `Certificate ${index + 1}`}
-                  className="w-full h-[300px] object-contain rounded-t-lg"
+                  className="w-auto h-auto object-contain rounded-lg"
                   onError={(e) => {
                     console.error('Image load error:', certificate.image);
                     const img = e.target instanceof HTMLImageElement ? e.target : null;

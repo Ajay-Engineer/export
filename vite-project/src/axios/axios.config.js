@@ -27,6 +27,11 @@ axiosInstance.interceptors.request.use(
       };
     }
 
+    // Remove Content-Type for FormData requests
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     return config;
   },
   (error) => {
