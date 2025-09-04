@@ -21,7 +21,7 @@ const app = express();
 app.set('trust proxy', 1); // trust first proxy (useful when behind load balancer)
 
 // Strict CORS configuration driven by env var ALLOWED_ORIGINS (comma separated)
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,https://rebeccaexim.netlify.app').split(',');
+const allowedOrigins = ('http://localhost:5174,http://localhost:5173,https://rebeccaexim.netlify.app').split(',');
 app.use(cors({
   origin: function (origin, callback) {
     // allow non-browser requests like curl or servers (no origin)
