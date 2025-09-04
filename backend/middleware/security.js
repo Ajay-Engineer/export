@@ -54,13 +54,8 @@ const securityMiddleware = (req, res, next) => {
           sanitizedQuery[key] = sanitizeDeep(value);
         }
       }
-      // Make req.query writable and assign sanitized version
-      Object.defineProperty(req, 'query', {
-        value: sanitizedQuery,
-        writable: true,
-        enumerable: true,
-        configurable: true
-      });
+      // Replace req.query with sanitized version
+      req.query = sanitizedQuery;
     }
 
     if (req.params) {
@@ -71,13 +66,8 @@ const securityMiddleware = (req, res, next) => {
           sanitizedParams[key] = sanitizeDeep(value);
         }
       }
-      // Make req.params writable and assign sanitized version
-      Object.defineProperty(req, 'params', {
-        value: sanitizedParams,
-        writable: true,
-        enumerable: true,
-        configurable: true
-      });
+      // Replace req.params with sanitized version
+      req.params = sanitizedParams;
     }
 
     // Add security headers
