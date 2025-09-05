@@ -1,4 +1,4 @@
-require('dotenv').config();
+// require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -7,6 +7,7 @@ const cors = require('cors');
 const fs = require('fs');
 const helmet = require('helmet');
 const hpp = require('hpp');
+const functions =require("firebase-functions")
 
 const testimonialRouter = require('./routes/testimonial');
 const productRouter = require('./routes/product');
@@ -17,22 +18,10 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// Security & middleware
+ // Security & middleware
 app.set('trust proxy', 1); // trust first proxy (useful when behind load balancer)
 
-// Strict CORS configuration driven by env var ALLOWED_ORIGINS (comma separated)
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,https://rebeccaexim.netlify.app').split(',');
-app.use(cors({
-  origin: function (origin, callback) {
-    // allow non-browser requests like curl or servers (no origin)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
-    return callback(new Error('CORS policy: Origin not allowed'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
+// CORS removed as requested
 
 // Basic security headers first
 app.use(helmet({
@@ -126,4 +115,5 @@ mongoose.connection.on('error', (err) => {
   console.error('MongoDB connection error:', err);
 });
 
+exports.api=functions.https.onRequest(app)
 
