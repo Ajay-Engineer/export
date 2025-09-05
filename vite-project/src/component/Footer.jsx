@@ -82,40 +82,40 @@ export default function Footer() {
           <h3 className="text-xl sm:text-2xl font-bold">Our Products</h3>
           <ul className="space-y-3 text-white/90">
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/health-mix" className="flex items-center space-x-3">
+              <Link to="/products/health-mix" className="flex items-center space-x-3">
                 <FaHeartbeat className="text-white w-5 h-5" />
                 <span>Health Mix</span>
-              </a>
+              </Link>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/egg" className="flex items-center space-x-3">
+              <Link to="/products/egg" className="flex items-center space-x-3">
                 <FaEgg className="text-white w-5 h-5" />
                 <span>Egg Products</span>
-              </a>
+              </Link>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/handicraft" className="flex items-center space-x-3">
+              <Link to="/products/handicraft" className="flex items-center space-x-3">
                 <FaPaintBrush className="text-white w-5 h-5" />
                 <span>Handicrafts</span>
-              </a>
+              </Link>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/decor-items" className="flex items-center space-x-3">
+              <Link to="/products/decor-items" className="flex items-center space-x-3">
                 <FaCube className="text-white w-5 h-5" />
                 <span>Decor Items</span>
-              </a>
+              </Link>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/home-textile" className="flex items-center space-x-3">
+              <Link to="/products/home-textile" className="flex items-center space-x-3">
                 <FaPagelines className="text-white w-5 h-5" />
                 <span>Home Textile</span>
-              </a>
+              </Link>
             </li>
             <li className="flex items-center space-x-3 hover:text-blue-400">
-              <a href="/products/bamboo-products" className="flex items-center space-x-3">
+              <Link to="/products/bamboo-products" className="flex items-center space-x-3">
                 <FaLeaf className="text-white w-5 h-5" />
                 <span>Bamboo Products</span>
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
