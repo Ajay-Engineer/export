@@ -23,7 +23,7 @@ app.set('trust proxy', 1); // trust first proxy (useful when behind load balance
 
 // CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'https://rebeccaexim.netlify.app', 'https://rebecca05151-14c39.web.app','https://rebecca05151-14c39.web.app/','https://rebeccaexim.co.in'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
@@ -104,15 +104,6 @@ app.use((err, req, res, next) => {
     error: err.message || 'Internal Server Error',
     path: req.path,
     method: req.method
-  });
-});
-
-const PORT = process.env.PORT || 3001;
-
-// Start server only after DB connection is established
-mongoose.connection.once('open', () => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
   });
 });
 
