@@ -1,4 +1,4 @@
-// require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -21,7 +21,13 @@ const app = express();
  // Security & middleware
 app.set('trust proxy', 1); // trust first proxy (useful when behind load balancer)
 
-// CORS removed as requested
+// CORS configuration
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:3001'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
+}));
 
 // Basic security headers first
 app.use(helmet({
@@ -117,4 +123,3 @@ mongoose.connection.on('error', (err) => {
 
 exports.api=functions.https.onRequest(app)
 
-///Rama

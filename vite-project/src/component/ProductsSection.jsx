@@ -22,7 +22,7 @@ const ProductsSection = () => {
     },
     {
       name: "Decor Items",
-      image: teaPowdersImg
+      image: "https://res.cloudinary.com/dxixoivs7/image/upload/v1756989007/products/prod_1756989003890_415078898.webp"
     }
   ];
 
