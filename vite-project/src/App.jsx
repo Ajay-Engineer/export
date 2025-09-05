@@ -35,6 +35,7 @@ import ProductCategory from "./component/ProductCategory";
 import ProductSubcategory from "./component/ProductSubcategory";
 import ProductDetailPage from "./component/ProductDetailPage";
 import ProductCreateForm from "./component/ProductCreateForm";
+import ScrollToTop from "./component/ScrollToTop";
 
 import Brand from "./component/Brand";
 import FAQ from "./component/FAQ";
@@ -46,6 +47,7 @@ function App() {
     <AuthProvider>
       <div className="flex flex-col min-h-screen">
         <Header />
+        <ScrollToTop />
         <main className="flex-grow">
           <Routes>
             {/* Public routes */}
