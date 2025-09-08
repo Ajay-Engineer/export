@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const { onRequest } = require('firebase-functions/v2/https');
 
 // Import routers
@@ -22,6 +23,7 @@ const app = express();
 // CORS Middleware
 // --------------------
 const allowedOrigins = [
+  'https://rebeccaexim.netlify.app',
   'https://rebecca05151-14c39.web.app',
   'https://rebecca05151-14c39.firebaseapp.com',
   'https://rebeccaexim.co.in',
@@ -30,24 +32,18 @@ const allowedOrigins = [
   'http://localhost:8080'
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization, Accept, Origin, X-Requested-With'
-  );
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}));
 
 // --------------------
 // Middleware
@@ -92,11 +88,16 @@ app.use('/api', async (req, res, next) => {
 // --------------------
 // API Routes
 // --------------------
-app.use('/api/products', productRouter);
-app.use('/api/testimonials', testimonialRouter);
-app.use('/api/packaging', packagingRouter);
-app.use('/api/certificates', certificateRouter);
-app.use('/api/categories', categoriesRouter);
+app.use('/products', productRouter);
+app.use('/testimonials', testimonialRouter);
+app.use('/packaging', packagingRouter);
+app.use('/certificates', certificateRouter);
+app.use('/categories', categoriesRouter);
+
+// Catch-all route for 404
+app.use('*', (req, res) => {
+  res.status(404).json({ success: false, error: 'Route not found' });
+});
 
 // --------------------
 // Error Handling
