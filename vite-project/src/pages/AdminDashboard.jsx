@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { productService } from "../firebase/services/productService";
-import { supabase } from "../supabase/client";
 
 
 const productCategories = [
@@ -18,24 +17,8 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [backendStatus, setBackendStatus] = useState("checking");
   const [editProduct, setEditProduct] = useState(null);
   const [viewProduct, setViewProduct] = useState(null);
-
-  // Backend health check every 5s
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const { error } = await supabase.from('products').select('id').limit(1);
-        setBackendStatus(error ? "offline" : "online");
-      } catch {
-        setBackendStatus("offline");
-      }
-    };
-    checkBackend();
-    const interval = setInterval(checkBackend, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Fetch products
   useEffect(() => {
@@ -56,7 +39,7 @@ const AdminDashboard = () => {
   const handleView = (prod) => setViewProduct(prod);
   const handleUpdate = async (updated) => {
     setLoading(true);
-    await productService.updateProduct(updated.id, updated, updated.category);
+    await productService.updateProduct(updated.id, updated);
     setEditProduct(null);
     // Refresh
     let data = await productService.getAllProducts();
@@ -69,11 +52,8 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <span className={`px-3 py-1 rounded text-white ${backendStatus === "online" ? "bg-green-600" : backendStatus === "offline" ? "bg-red-600" : "bg-yellow-400"}`}>
-          Backend: {backendStatus}
-        </span>
       </div>
       <div className="mb-4">
         <label className="font-semibold mr-2">Filter by Category:</label>

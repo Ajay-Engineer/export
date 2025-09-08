@@ -7,7 +7,6 @@ const cors = require('cors');
 const fs = require('fs');
 const helmet = require('helmet');
 const hpp = require('hpp');
-const functions =require("firebase-functions")
 
 const testimonialRouter = require('./routes/testimonial');
 const productRouter = require('./routes/product');
@@ -112,5 +111,9 @@ mongoose.connection.on('error', (err) => {
   console.error('MongoDB connection error:', err);
 });
 
-exports.api=functions.https.onRequest(app)
+// Start server
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
