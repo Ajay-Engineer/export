@@ -79,10 +79,25 @@ const connectDB = async () => {
   }
 };
 
-// Connect DB before API routes
+// Connect DB before API routes (with error handling)
 app.use('/api', async (req, res, next) => {
-  await connectDB();
-  next();
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('Database connection failed:', err);
+    return res.status(503).json({ success: false, error: 'Database connection failed' });
+  }
+});
+
+// Health check endpoint (doesn't require DB)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ message: 'Rebecca Backend API', version: '1.0.0', status: 'running' });
 });
 
 // --------------------
