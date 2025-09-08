@@ -41,6 +41,7 @@ import Brand from "./component/Brand";
 import FAQ from "./component/FAQ";
 import AdminCertificate from "./component/AdminCertificate";
 import AdminTestimonials from "./component/AdminTestimonials.jsx";
+import NotFound from "./component/NotFound";
 
 function App() {
   return (
@@ -136,6 +137,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* 404 Page for unknown routes */}
+            <Route path="*" element={<NotFound />} />
+
             {/* Catch-all for unknown admin URLs - redirect to home */}
             <Route path="/admin/*" element={<Navigate to="/" replace />} />
           </Routes>
