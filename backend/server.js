@@ -28,10 +28,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
 
-// Basic security headers first
-app.use(helmet({
-  xssFilter: false // We handle XSS in our custom middleware
-}));
+// Basic security headers first - DISABLED for deployment
+// app.use(helmet({
+//   xssFilter: false // We handle XSS in our custom middleware
+// }));
 
 // Parse JSON bodies and cookies
 app.use(express.json({ limit: '20mb' }));
@@ -39,8 +39,8 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(cookieParser());
 
 // Security middlewares
-app.use(hpp()); // Prevent HTTP Parameter Pollution
-app.use(require('./middleware/security')); // Custom security middleware
+// app.use(hpp()); // Prevent HTTP Parameter Pollution - DISABLED for deployment
+// app.use(require('./middleware/security')); // Custom security middleware - DISABLED for deployment
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

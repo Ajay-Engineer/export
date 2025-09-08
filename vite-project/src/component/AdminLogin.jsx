@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -17,7 +17,7 @@ export default function AdminLogin() {
       setError('');
       setLoading(true);
       await login(email, password);
-      navigate('/admin');
+      navigate('/management');
     } catch (err) {
       setError('Failed to sign in: ' + err.message);
     }
@@ -37,6 +37,7 @@ export default function AdminLogin() {
             {error}
           </div>
         )}
+       
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>

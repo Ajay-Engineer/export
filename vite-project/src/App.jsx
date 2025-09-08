@@ -1,5 +1,5 @@
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Header from "./component/Header";
 import React from "react";
 import Footer from "./component/Footer";
@@ -7,7 +7,7 @@ import ContactForm from "./component/Form.jsx";
 import PaymentTerms from "./component/PaymentTerms.jsx";
 import TermsAndConditions from "./component/TermsAndConditions.jsx";
 import LandingPage from "./component/LandingPage";
-import ProductAdmin from "./pages/ProductAdmin";
+
 import ProductsPage from "./component/ProductsPage";
 import DynamicCategory from "./component/DynamicCategory";
 import CategoryManagement from "./component/CategoryManagement";
@@ -67,8 +67,8 @@ function App() {
             <Route path="/products/bamboo-products" element={<BambooProducts />} />
             <Route path="/products/category" element={<ProductCategory />} />
             <Route path="/products/subcategory" element={<ProductSubcategory />} />
-            <Route 
-              path="/admin/add" 
+            <Route
+              path="/management/add"
               element={
                 <ProtectedRoute>
                   <ProductCreateForm />
@@ -86,10 +86,10 @@ function App() {
             <Route path="/stats" element={<StatsSection />} />
             <Route path="/faq" element={<FAQ />} />
 
-            {/* Admin routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+            {/* Admin routes - Hidden paths for security */}
+            <Route path="/management/login" element={<AdminLogin />} />
             <Route
-              path="/admin"
+              path="/management"
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
@@ -97,7 +97,7 @@ function App() {
               }
             />
             <Route
-              path="/admin/dashboard"
+              path="/management/dashboard"
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
@@ -105,7 +105,7 @@ function App() {
               }
             />
             <Route
-              path="/admin/categories"
+              path="/management/categories"
               element={
                 <ProtectedRoute>
                   <CategoryManagement />
@@ -113,16 +113,15 @@ function App() {
               }
             />
             <Route
-              path="/admin/certificates"
+              path="/management/certificates"
               element={
                 <ProtectedRoute>
-                  {/** Admin certificate management UI */}
                   <AdminCertificate />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/admin/testimonials"
+              path="/management/testimonials"
               element={
                 <ProtectedRoute>
                   <AdminTestimonials />
@@ -130,17 +129,19 @@ function App() {
               }
             />
             <Route
-              path="/admin/products"
+              path="/management/products"
               element={
                 <ProtectedRoute>
-                  <ProductAdmin />
+                  <AdminDashboard />
                 </ProtectedRoute>
               }
             />
+            {/* Catch-all for unknown admin URLs - redirect to home */}
+            <Route path="/admin/*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
         {/* Only show footer on non-admin pages */}
-        {!window.location.pathname.startsWith('/admin') && <Footer />}
+        {!window.location.pathname.startsWith('/admin') && !window.location.pathname.startsWith('/management') && <Footer />}
       </div>
     </AuthProvider>
   );

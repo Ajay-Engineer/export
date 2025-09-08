@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Pencil, Trash2, Plus, X } from "lucide-react";
+import { Pencil, Trash2, Plus, X, LogOut, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from '../contexts/AuthContext';
 import axiosInstance from '../axios/axios.config';
 import AdminBottomNav from './AdminBottomNav';
 import ProductCreateForm from './ProductCreateForm';
 
 const categories = [
-  { value: "", label: "All Products" },
-  { value: "herbal", label: "Herbal Extract Products" },
-  { value: "palm-jaggery", label: "Palm Jaggery Products" },
-  { value: "coir", label: "Coir Products" },
-  { value: "tea", label: "Tea Varieties" },
-  { value: "health-mix", label: "Health Mix" },
-  { value: "handicraft", label: "Handicrafts" },
+
+  { value: "bamboo-products", label: "Bamboo Products" },
+  { value: "decor-items", label: "Decor Items" },
   { value: "egg", label: "Egg Products" },
+  { value: "handicraft", label: "Handicrafts" },
+  { value: "health-mix", label: "Health Mix" },
+  { value: "home-textile", label: "Home Textile" },
 ];
 
 const AdminDashboard = () => {
@@ -25,6 +25,7 @@ const AdminDashboard = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout, user } = useAuth();
 
   const formatImageUrl = (img) => {
     if (!img) return null;
@@ -87,41 +88,201 @@ const AdminDashboard = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen p-6 bg-gray-50">
-      <div className="max-w-7xl mx-auto flex gap-6">
-        {/* Sidebar */}
-        <aside className="hidden md:block w-64">
-          <div className="bg-white rounded-lg shadow p-4">
-            <nav className="space-y-2">
-              <button onClick={() => navigate('/admin')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Dashboard</button>
-              <button onClick={() => navigate('/admin/products')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Products</button>
-              <button onClick={() => navigate('/admin/categories')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Categories</button>
-              <button onClick={() => navigate('/admin/certificates')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Certificates</button>
-              <button onClick={() => navigate('/admin/testimonials')} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100">Testimonials</button>
-            </nav>
-          </div>
-        </aside>
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/management/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
-        {/* Main */}
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setShowAddModal(true)} className="inline-flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded">
-                <Plus className="w-4 h-4" /> Add Product
-              </button>
+  return (
+    <div className="min-h-screen p-3 sm:p-4 lg:p-6 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Mobile Header with Menu Toggle */}
+        <div className="md:hidden mb-4">
+          <div className="flex items-center justify-between bg-white rounded-lg shadow p-3">
+            <h1 className="text-lg font-bold text-gray-800">Admin Dashboard</h1>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          {/* Sidebar - Desktop */}
+          <aside className="hidden lg:block w-64 flex-shrink-0">
+            <div className="bg-white rounded-lg shadow p-4 sticky top-4">
+              <nav className="space-y-2">
+                <button
+                  onClick={() => navigate('/management')}
+                  className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors ${
+                    window.location.pathname === '/management' ? 'bg-blue-100 text-blue-700' : ''
+                  }`}
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => navigate('/management/products')}
+                  className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors ${
+                    window.location.pathname === '/management/products' ? 'bg-blue-100 text-blue-700' : ''
+                  }`}
+                >
+                  Products
+                </button>
+                <button
+                  onClick={() => navigate('/management/categories')}
+                  className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors ${
+                    window.location.pathname === '/management/categories' ? 'bg-blue-100 text-blue-700' : ''
+                  }`}
+                >
+                  Categories
+                </button>
+                <button
+                  onClick={() => navigate('/management/certificates')}
+                  className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors ${
+                    window.location.pathname === '/management/certificates' ? 'bg-blue-100 text-blue-700' : ''
+                  }`}
+                >
+                  Certificates
+                </button>
+                <button
+                  onClick={() => navigate('/management/testimonials')}
+                  className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors ${
+                    window.location.pathname === '/management/testimonials' ? 'bg-blue-100 text-blue-700' : ''
+                  }`}
+                >
+                  Testimonials
+                </button>
+                <hr className="my-2" />
+                <button onClick={handleLogout} className="w-full text-left px-3 py-2 rounded bg-red-50 text-red-700 hover:bg-red-100 transition-colors">
+                  <LogOut className="w-4 h-4 inline mr-2" /> Logout
+                </button>
+              </nav>
+            </div>
+          </aside>
+
+          {/* Mobile Sidebar Overlay */}
+          {isSidebarOpen && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsSidebarOpen(false)} />
+              <div className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Menu</h2>
+                    <button
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="p-2 rounded-md hover:bg-gray-100"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <nav className="space-y-2">
+                    <button
+                      onClick={() => { navigate('/management'); setIsSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 ${
+                        window.location.pathname === '/management' ? 'bg-blue-100 text-blue-700' : ''
+                      }`}
+                    >
+                      Dashboard
+                    </button>
+                    <button
+                      onClick={() => { navigate('/management/products'); setIsSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 ${
+                        window.location.pathname === '/management/products' ? 'bg-blue-100 text-blue-700' : ''
+                      }`}
+                    >
+                      Products
+                    </button>
+                    <button
+                      onClick={() => { navigate('/management/categories'); setIsSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 ${
+                        window.location.pathname === '/management/categories' ? 'bg-blue-100 text-blue-700' : ''
+                      }`}
+                    >
+                      Categories
+                    </button>
+                    <button
+                      onClick={() => { navigate('/management/certificates'); setIsSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 ${
+                        window.location.pathname === '/management/certificates' ? 'bg-blue-100 text-blue-700' : ''
+                      }`}
+                    >
+                      Certificates
+                    </button>
+                    <button
+                      onClick={() => { navigate('/management/testimonials'); setIsSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 ${
+                        window.location.pathname === '/management/testimonials' ? 'bg-blue-100 text-blue-700' : ''
+                      }`}
+                    >
+                      Testimonials
+                    </button>
+                    <hr className="my-2" />
+                    <button
+                      onClick={() => { handleLogout(); setIsSidebarOpen(false); }}
+                      className="w-full text-left px-3 py-2 rounded bg-red-50 text-red-700 hover:bg-red-100"
+                    >
+                      <LogOut className="w-4 h-4 inline mr-2" /> Logout
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Desktop Header - Hidden on mobile since we have mobile header */}
+            <div className="hidden lg:flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <button onClick={() => setShowAddModal(true)} className="inline-flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors">
+                  <Plus className="w-4 h-4" /> Add Product
+                </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Filter</label>
+                  <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="p-2 border rounded-md min-w-[200px]">
+                    <option value="">All Products</option>
+                    {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  Welcome, {user?.displayName || user?.email || 'Admin'}
+                </span>
+                <button onClick={() => fetchProducts()} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 transition-colors">Refresh</button>
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" /> Logout
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Controls */}
+            <div className="lg:hidden mb-4 space-y-3">
+              <div className="flex gap-2">
+                <button onClick={() => setShowAddModal(true)} className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors">
+                  <Plus className="w-4 h-4" /> Add Product
+                </button>
+                <button onClick={() => fetchProducts()} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 transition-colors">
+                  Refresh
+                </button>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Filter</label>
-                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="p-2 border rounded-md min-w-[200px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Filter</label>
+                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full p-2 border rounded-md">
                   <option value="">All Products</option>
                   {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
               </div>
             </div>
-            <div>
-              <button onClick={() => fetchProducts()} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Refresh</button>
-            </div>
-          </div>
 
           <div className="bg-white rounded-lg shadow p-4">
             {loading ? (
@@ -187,9 +348,10 @@ const AdminDashboard = () => {
             )}
           </div>
         </div>
+        </div>
       </div>
 
-      {/* Add/Edit Modal */}
+    {/* Add/Edit Modal */}
       {(showAddModal || showEditModal) && (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => { setShowAddModal(false); setShowEditModal(false); setSelectedProduct(null); }} />

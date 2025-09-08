@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // Removed direct SQL client import. Use API calls only.
 import { Loader2 } from 'lucide-react';
 import axiosInstance from '../axios/axios.config';
+import AdminBottomNav from './AdminBottomNav';
 const API_URL = '/api/categories';
 
 export default function CategoryManagement() {
@@ -242,6 +243,9 @@ export default function CategoryManagement() {
           ))}
         </div>
       </div>
+
+      <div className="h-20"></div>
+      <AdminBottomNav />
     </div>
   );
 }
