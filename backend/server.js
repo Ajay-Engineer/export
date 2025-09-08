@@ -90,6 +90,11 @@ app.use('/api', async (req, res, next) => {
   }
 });
 
+// Initialize DB connection on startup (don't block server start)
+connectDB().catch(err => {
+  console.error('Initial database connection failed, but server will continue:', err);
+});
+
 // Health check endpoint (doesn't require DB)
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -153,7 +158,13 @@ exports.api = onRequest(app);
 // --------------------
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
+  console.log(`Starting server on port ${PORT}...`);
+
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`✅ Server successfully started and listening on port ${PORT}`);
+    console.log(`📍 Health check available at: http://localhost:${PORT}/health`);
+  }).on('error', (err) => {
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
   });
 }
