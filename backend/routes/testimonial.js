@@ -6,18 +6,21 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const functions = require('firebase-functions');
 
 // Helper function to handle async routes
 const asyncHandler = (fn) => (req, res, next) => {
   return Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Configure Cloudinary (lazy-loaded)
+const configureCloudinary = () => {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+};
 
 // Configure Cloudinary storage
 const cloudinaryStorage = new CloudinaryStorage({
@@ -55,19 +58,20 @@ const verifyToken = (req, res, next) => {
 // Admin login
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  
+
   // Check admin credentials (replace with your admin credentials)
-  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+  if (username === process.env.ADMIN_USERNAME &&
+      password === process.env.ADMIN_PASSWORD) {
     // Create and assign token
     const token = jwt.sign({ isAdmin: true }, process.env.JWT_SECRET);
-    
+
     // Set cookie
     res.cookie('adminToken', token, {
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 1 day
       secure: process.env.NODE_ENV === 'production'
     });
-    
+
     res.json({ success: true });
   } else {
     res.status(400).json({ message: 'Invalid credentials' });
@@ -86,9 +90,12 @@ router.get('/', asyncHandler(async (req, res) => {
 // Create new testimonial (admin only)
 router.post('/', verifyToken, upload.single('image'), async (req, res) => {
   try {
+    // Configure Cloudinary at runtime
+    configureCloudinary();
+
     console.log('Request body:', req.body);
     console.log('File:', req.file);
-    
+
     if (!req.file) {
       return res.status(400).json({ message: 'Image is required' });
     }
@@ -114,6 +121,9 @@ router.post('/', verifyToken, upload.single('image'), async (req, res) => {
 // Update testimonial (admin only)
 router.patch('/:id', verifyToken, upload.single('image'), async (req, res) => {
   try {
+    // Configure Cloudinary at runtime
+    configureCloudinary();
+
     const testimonial = await Testimonial.findById(req.params.id);
     if (!testimonial) {
       return res.status(404).json({ success: false, message: 'Testimonial not found' });

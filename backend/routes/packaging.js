@@ -5,18 +5,21 @@ const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const functions = require('firebase-functions');
 
 // Helper function to handle async routes
 const asyncHandler = (fn) => (req, res, next) => {
   return Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Configure Cloudinary (lazy-loaded)
+const configureCloudinary = () => {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+};
 
 // Configure Cloudinary storage
 const cloudinaryStorage = new CloudinaryStorage({
@@ -56,6 +59,9 @@ router.get('/', asyncHandler(async (req, res) => {
 
 // Add packaging standard
 router.post('/', upload.single('image'), asyncHandler(async (req, res) => {
+  // Configure Cloudinary at runtime
+  configureCloudinary();
+
   const { title, description, order } = req.body;
   const image = req.file ? req.file.path : null;
 
@@ -82,6 +88,9 @@ router.post('/', upload.single('image'), asyncHandler(async (req, res) => {
 
 // Update packaging standard
 router.put('/:id', upload.single('image'), asyncHandler(async (req, res) => {
+  // Configure Cloudinary at runtime
+  configureCloudinary();
+
   const { title, description, order } = req.body;
   const updateData = { title, description, order };
   

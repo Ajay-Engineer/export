@@ -5,13 +5,16 @@ const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const functions = require('firebase-functions');
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Configure Cloudinary (lazy-loaded)
+const configureCloudinary = () => {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+};
 
 // Configure Cloudinary storage for certificates
 const storage = new CloudinaryStorage({
@@ -74,6 +77,9 @@ router.get('/', asyncHandler(async (req, res) => {
 
 // Add new certificate
 router.post('/add', upload.single('image'), asyncHandler(async (req, res) => {
+  // Configure Cloudinary at runtime
+  configureCloudinary();
+
   if (!req.file) {
     return res.status(400).json({
       success: false,
@@ -105,6 +111,9 @@ router.post('/add', upload.single('image'), asyncHandler(async (req, res) => {
 
 // Update certificate
 router.put('/edit/:id', upload.single('image'), asyncHandler(async (req, res) => {
+  // Configure Cloudinary at runtime
+  configureCloudinary();
+
   const { id } = req.params;
   const { title } = req.body;
 

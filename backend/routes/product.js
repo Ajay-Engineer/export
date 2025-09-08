@@ -6,13 +6,16 @@ const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const slugify = require('slugify');
+const functions = require('firebase-functions');
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Configure Cloudinary (lazy-loaded)
+const configureCloudinary = () => {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+};
 
 // Product categories
 const VALID_CATEGORIES = [
@@ -154,10 +157,13 @@ const asyncHandler = (fn) => (req, res, next) => {
 // Upload image endpoint for both product images and certificates
 router.post('/upload', multerUpload.single('file'), asyncHandler(async (req, res) => {
   try {
+    // Configure Cloudinary at runtime
+    configureCloudinary();
+
     if (!req.file) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        error: 'No file uploaded' 
+        error: 'No file uploaded'
       });
     }
 
@@ -275,7 +281,10 @@ router.get('/category/:category', validateCategory, asyncHandler(async (req, res
 // Create a new product
 router.post('/', upload, asyncHandler(async (req, res) => {
   try {
-    const { 
+    // Configure Cloudinary at runtime
+    configureCloudinary();
+
+    const {
       title,
       description,
       shortDescription,
@@ -404,6 +413,9 @@ router.put('/:id', (req, res, next) => {
   }
 }, asyncHandler(async (req, res) => {
   try {
+    // Configure Cloudinary at runtime
+    configureCloudinary();
+
     const { id } = req.params;
     console.log(`Updating product ${id}`, req.body);
 
