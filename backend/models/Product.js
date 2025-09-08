@@ -43,16 +43,16 @@ const productSchema = new mongoose.Schema({
   },
   images: [{
     type: String,
-    required: true
+    required: false
   }],
   certifications: [{
     src: {
       type: String,
-      required: true
+      required: false
     },
     alt: {
       type: String,
-      required: true
+      required: false
     }
   }],
   benefits: [{

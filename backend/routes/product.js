@@ -390,60 +390,94 @@ router.post('/', upload, asyncHandler(async (req, res) => {
   }
 }));
 
-// Update product
-router.put('/:id', upload, asyncHandler(async (req, res) => {
+// Update product - handle both JSON and multipart/form-data
+router.put('/:id', (req, res, next) => {
+  // Check if this is a JSON request or form-data
+  const contentType = req.headers['content-type'] || '';
+
+  if (contentType.includes('multipart/form-data')) {
+    // Use multer middleware for file uploads
+    return upload(req, res, next);
+  } else {
+    // Skip multer for JSON requests
+    next();
+  }
+}, asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`Updating product ${id}`, req.body);
-    
+
     const existingProduct = await Product.findById(id);
     if (!existingProduct) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: 'Product not found' 
+        error: 'Product not found'
       });
     }
 
-    // Process certificates - now handled directly as part of product
-    const certifications = safeJSONParse(req.body.certificationsData, []);
-    const processedCertifications = [];
-    
-    console.log('Processing certificates:', {
-      rawData: req.body.certificationsData,
-      parsedData: certifications,
-      files: req.files?.certificateFiles
-    });
-    
-    // Handle certificate files - upload them to Cloudinary and store URLs
-    if (req.files && req.files.certificateFiles) {
-      const certFiles = Array.isArray(req.files.certificateFiles) 
-        ? req.files.certificateFiles 
-        : [req.files.certificateFiles];
-      
-      for (let i = 0; i < Math.min(certFiles.length, certifications.length); i++) {
-        const certFile = certFiles[i];
-        const cert = certifications[i];
-        
-        if (certFile && cert) {
-          processedCertifications.push({
-            src: certFile.path, // Cloudinary URL
-            alt: cert.alt || 'Certificate'
-          });
+    const contentType = req.headers['content-type'] || '';
+    const isMultipart = contentType.includes('multipart/form-data');
+
+    let processedCertifications = [];
+    let allImages = [];
+
+    if (isMultipart) {
+      // Handle multipart/form-data with file uploads
+      console.log('Processing multipart request with files');
+
+      // Process certificates
+      const certifications = safeJSONParse(req.body.certificationsData, []);
+
+      // Handle certificate files - upload them to Cloudinary and store URLs
+      if (req.files && req.files.certificateFiles) {
+        const certFiles = Array.isArray(req.files.certificateFiles)
+          ? req.files.certificateFiles
+          : [req.files.certificateFiles];
+
+        for (let i = 0; i < Math.min(certFiles.length, certifications.length); i++) {
+          const certFile = certFiles[i];
+          const cert = certifications[i];
+
+          if (certFile && cert) {
+            processedCertifications.push({
+              src: certFile.path, // Cloudinary URL
+              alt: cert.alt || 'Certificate'
+            });
+          }
+        }
+      } else if (certifications && certifications.length > 0) {
+        // If no new files but we have existing certificate data
+        for (const cert of certifications) {
+          if (cert.src && cert.src.trim() !== '') {
+            processedCertifications.push({
+              src: cert.src,
+              alt: cert.alt || 'Certificate'
+            });
+          }
         }
       }
-    } else if (certifications && certifications.length > 0) {
-      // If no new files but we have existing certificate data
-      for (const cert of certifications) {
-        if (cert.src && cert.src.trim() !== '') {
-          processedCertifications.push({
-            src: cert.src,
-            alt: cert.alt || 'Certificate'
-          });
-        }
+
+      // Handle product images
+      const existingImages = safeJSONParse(req.body.existingImages, []);
+      const newImageFiles = req.files?.images || [];
+
+      // Process new image uploads
+      let newImageUrls = [];
+      if (Array.isArray(newImageFiles)) {
+        newImageUrls = newImageFiles.map(file => file.path); // Cloudinary URLs
+      } else if (newImageFiles.path) {
+        // Single file case
+        newImageUrls = [newImageFiles.path];
       }
+
+      // Combine existing and new images, filter out any empty values
+      allImages = [...existingImages, ...newImageUrls].filter(img => img && img.trim() !== '');
+    } else {
+      // Handle JSON request - preserve existing images and certifications
+      console.log('Processing JSON request - preserving existing files');
+      allImages = existingProduct.images || [];
+      processedCertifications = existingProduct.certifications || [];
     }
-    
-    console.log('Final processed certificates:', processedCertifications);
 
     // Prepare update data
     const updateData = {
@@ -466,59 +500,31 @@ router.put('/:id', upload, asyncHandler(async (req, res) => {
       updateData.certifications = processedCertifications;
     }
 
-    console.log('Final update data:', {
-      ...updateData,
-      certificationCount: processedCertifications.length,
-    });
-
-    // Handle product images
-    const existingImages = safeJSONParse(req.body.existingImages, []);
-    const newImageFiles = req.files?.images || [];
-    
-    console.log('Processing images:', {
-      existingCount: existingImages.length,
-      newCount: newImageFiles.length,
-      existingImages,
-      newFiles: newImageFiles.map(f => f.originalname)
-    });
-    
-    // Process new image uploads
-    let newImageUrls = [];
-    if (Array.isArray(newImageFiles)) {
-      newImageUrls = newImageFiles.map(file => file.path); // Cloudinary URLs
-    } else if (newImageFiles.path) {
-      // Single file case
-      newImageUrls = [newImageFiles.path];
-    }
-    
-    // Combine existing and new images, filter out any empty values
-    const allImages = [...existingImages, ...newImageUrls].filter(img => img && img.trim() !== '');
-    
-    // Update the images in the update data
+    // Update images if we have them
     if (allImages.length > 0) {
       updateData.images = allImages;
-      console.log('Final image list:', updateData.images);
     }
-    
+
     console.log('Final update data:', {
       ...updateData,
-      imageCount: updateData.images ? updateData.images.length : 0
+      imageCount: updateData.images ? updateData.images.length : 0,
+      certificationCount: processedCertifications.length,
+      isMultipart
     });
 
     console.log('Updating product with ID:', id);
     // Ensure the update includes all fields that should be updated
     const updatedProduct = await Product.findByIdAndUpdate(
-      id, 
-      { 
+      id,
+      {
         $set: {
           ...updateData,
-          images: updateData.images || [], // Ensure images array is always set
           updatedAt: new Date()
         }
       },
-      { 
-        new: true, 
-        runValidators: true 
+      {
+        new: true,
+        runValidators: true
       }
     );
 
@@ -526,12 +532,6 @@ router.put('/:id', upload, asyncHandler(async (req, res) => {
       id: updatedProduct._id,
       imageCount: updatedProduct.images ? updatedProduct.images.length : 0,
       certCount: updatedProduct.certifications ? updatedProduct.certifications.length : 0,
-      images: updatedProduct.images
-    });
-    
-    console.log('Updated product:', {
-      id: updatedProduct._id,
-      certifications: updatedProduct.certifications,
       updateSuccess: true
     });
 
@@ -548,10 +548,18 @@ router.put('/:id', upload, asyncHandler(async (req, res) => {
       product: updatedProduct
     });
   } catch (error) {
-    console.error('Error updating product:', error);
+    console.error('Error updating product:', {
+      productId: req.params.id,
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      contentType: req.headers['content-type'],
+      files: req.files ? Object.keys(req.files) : 'none'
+    });
     res.status(500).json({
       success: false,
-      error: error.message || 'Error updating product'
+      error: error.message || 'Error updating product',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }));

@@ -21,9 +21,9 @@ const app = express();
  // Security & middleware
 app.set('trust proxy', 1); // trust first proxy (useful when behind load balancer)
 
-// CORS configuration
+// CORS configuration - allow all origins temporarily
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'https://rebeccaexim.netlify.app', 'https://rebecca05151-14c39.web.app','https://rebecca05151-14c39.web.app/','https://rebeccaexim.co.in'],
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
@@ -35,8 +35,8 @@ app.use(helmet({
 }));
 
 // Parse JSON bodies and cookies
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(cookieParser());
 
 // Security middlewares
