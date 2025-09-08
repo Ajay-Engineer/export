@@ -132,3 +132,13 @@ app.use((err, req, res, next) => {
 // Export Firebase Function
 // --------------------
 exports.api = onRequest(app);
+
+// --------------------
+// For Cloud Run or direct running
+// --------------------
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
