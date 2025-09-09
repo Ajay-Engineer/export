@@ -187,7 +187,7 @@ export default function Footer() {
             © 2025 Rebecca Exim. All rights reserved.
           </span>
           <span className="w-full md:w-1/3 text-center text-2xl font-bold">
-            #TrustedPartner
+            #TrustedP<Link to="/management/login" className="hover:text-blue-400 transition cursor-pointer">a</Link>rtner
           </span>
           <span className="w-full md:w-1/3 text-right mt-2 md:mt-0">
             Developed by{" "}
@@ -195,7 +195,7 @@ export default function Footer() {
               href="#"
               className="font-semibold text-white hover:text-blue-400 transition"
             >
-              HIG Automation
+              HIG AI Automation
             </a>
             <br />
 

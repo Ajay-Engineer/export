@@ -11,6 +11,11 @@ export default function ProtectedRoute({ children }) {
 
   // Simplified authentication check for deployment
   if (!user) {
+    // Redirect to login page if trying to access management routes
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/management')) {
+      return <Navigate to="/management/login" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 

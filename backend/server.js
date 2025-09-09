@@ -58,6 +58,9 @@ app.use(cookieParser());
 // Serve static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, '../vite-project/dist')));
+
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads', 'products');
 if (!fs.existsSync(uploadsDir)) {
@@ -116,9 +119,9 @@ app.use('/api/packaging', packagingRouter);
 app.use('/api/certificates', certificateRouter);
 app.use('/api/categories', categoriesRouter);
 
-// Catch-all route for 404
-app.use('*', (req, res) => {
-  res.status(404).json({ success: false, error: 'Route not found' });
+// Catch-all handler: send back index.html for client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../vite-project/dist/index.html'));
 });
 
 // --------------------
