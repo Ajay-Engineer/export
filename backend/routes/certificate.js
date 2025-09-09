@@ -9,10 +9,18 @@ const functions = require('firebase-functions');
 
 // Configure Cloudinary (lazy-loaded)
 const configureCloudinary = () => {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    throw new Error('Cloudinary configuration missing. Please check CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.');
+  }
+
   cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret
   });
 };
 
@@ -77,36 +85,71 @@ router.get('/', asyncHandler(async (req, res) => {
 
 // Add new certificate
 router.post('/add', upload.single('image'), asyncHandler(async (req, res) => {
-  // Configure Cloudinary at runtime
-  configureCloudinary();
+  try {
+    // Configure Cloudinary at runtime
+    configureCloudinary();
 
-  if (!req.file) {
-    return res.status(400).json({
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No image file provided'
+      });
+    }
+
+    const { title } = req.body;
+    if (!title || !title.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Title is required'
+      });
+    }
+
+    const certificate = new Certificate({
+      title: title.trim(),
+      image: req.file.path
+    });
+
+    await certificate.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Certificate added successfully',
+      data: certificate
+    });
+  } catch (error) {
+    console.error('Error adding certificate:', {
+      error: error.message || 'Unknown error',
+      stack: error.stack || 'No stack trace',
+      name: error.name || 'Error',
+      code: error.code,
+      body: req.body,
+      file: req.file ? req.file.originalname : 'none'
+    });
+
+    // Handle specific error types
+    let statusCode = 500;
+    let errorMessage = 'Error adding certificate';
+
+    if (error.name === 'ValidationError') {
+      statusCode = 400;
+      errorMessage = 'Validation error: ' + Object.values(error.errors).map(e => e.message).join(', ');
+    } else if (error.message && error.message.includes('Cloudinary')) {
+      statusCode = 500;
+      errorMessage = 'File upload error: ' + error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    res.status(statusCode).json({
       success: false,
-      error: 'No image file provided'
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack,
+        name: error.name,
+        code: error.code
+      } : undefined
     });
   }
-
-  const { title } = req.body;
-  if (!title || !title.trim()) {
-    return res.status(400).json({
-      success: false,
-      error: 'Title is required'
-    });
-  }
-
-  const certificate = new Certificate({
-    title: title.trim(),
-    image: req.file.path
-  });
-
-  await certificate.save();
-
-  res.status(201).json({
-    success: true,
-    message: 'Certificate added successfully',
-    data: certificate
-  });
 }));
 
 // Update certificate

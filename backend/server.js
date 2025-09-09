@@ -108,11 +108,11 @@ app.get('/', (req, res) => {
 // --------------------
 // API Routes
 // --------------------
-app.use('/products', productRouter);
-app.use('/testimonials', testimonialRouter);
-app.use('/packaging', packagingRouter);
-app.use('/certificates', certificateRouter);
-app.use('/categories', categoriesRouter);
+app.use('/api/products', productRouter);
+app.use('/api/testimonials', testimonialRouter);
+app.use('/api/packaging', packagingRouter);
+app.use('/api/certificates', certificateRouter);
+app.use('/api/categories', categoriesRouter);
 
 // Catch-all route for 404
 app.use('*', (req, res) => {

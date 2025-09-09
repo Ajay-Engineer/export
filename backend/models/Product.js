@@ -114,12 +114,33 @@ const productSchema = new mongoose.Schema({
 });
 
 // Create slug from title before saving
-productSchema.pre('save', function(next) {
+productSchema.pre('save', async function(next) {
   if (this.isModified('title')) {
-    this.slug = this.title
+    let baseSlug = this.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
+
+    // Check if slug already exists (excluding current document)
+    let existingProduct = await mongoose.models.Product.findOne({
+      slug: baseSlug,
+      _id: { $ne: this._id }
+    });
+
+    let slug = baseSlug;
+    let counter = 1;
+
+    // If slug exists, append counter until unique
+    while (existingProduct) {
+      slug = `${baseSlug}-${counter}`;
+      existingProduct = await mongoose.models.Product.findOne({
+        slug: slug,
+        _id: { $ne: this._id }
+      });
+      counter++;
+    }
+
+    this.slug = slug;
   }
   next();
 });

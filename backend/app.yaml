@@ -1,0 +1,10 @@
+runtime: nodejs22
+env_variables:
+  NODE_ENV: production
+  MONGO_URL: mongodb+srv://ajai17101999:b9DmfWPeF569qlxt@cluster0.i9lexj3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+  CLOUDINARY_CLOUD_NAME: dxixoivs7
+  CLOUDINARY_API_KEY: 831889974422756
+  CLOUDINARY_API_SECRET: jB3MN8yhNYAqxralJV6Pjrqx1X4
+  JWT_SECRET: rebecca-exim-production-jwt-secret-2024-secure-key
+  ADMIN_USERNAME: admin
+  ADMIN_PASSWORD: admin123

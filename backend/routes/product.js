@@ -10,10 +10,18 @@ const functions = require('firebase-functions');
 
 // Configure Cloudinary (lazy-loaded)
 const configureCloudinary = () => {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    throw new Error('Cloudinary configuration missing. Please check CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.');
+  }
+
   cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret
   });
 };
 
@@ -525,6 +533,8 @@ router.put('/:id', (req, res, next) => {
     });
 
     console.log('Updating product with ID:', id);
+    console.log('Update data keys:', Object.keys(updateData));
+
     // Ensure the update includes all fields that should be updated
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
@@ -539,6 +549,10 @@ router.put('/:id', (req, res, next) => {
         runValidators: true
       }
     );
+
+    if (!updatedProduct) {
+      throw new Error('Product update failed - product not found after update');
+    }
 
     console.log('Updated product result:', {
       id: updatedProduct._id,
@@ -562,16 +576,40 @@ router.put('/:id', (req, res, next) => {
   } catch (error) {
     console.error('Error updating product:', {
       productId: req.params.id,
-      error: error.message,
-      stack: error.stack,
+      error: error.message || 'Unknown error',
+      stack: error.stack || 'No stack trace',
+      name: error.name || 'Error',
+      code: error.code,
       body: req.body,
       contentType: req.headers['content-type'],
       files: req.files ? Object.keys(req.files) : 'none'
     });
-    res.status(500).json({
+
+    // Handle specific error types
+    let statusCode = 500;
+    let errorMessage = 'Error updating product';
+
+    if (error.name === 'ValidationError') {
+      statusCode = 400;
+      errorMessage = 'Validation error: ' + Object.values(error.errors).map(e => e.message).join(', ');
+    } else if (error.name === 'CastError') {
+      statusCode = 400;
+      errorMessage = 'Invalid product ID format';
+    } else if (error.code === 11000) {
+      statusCode = 409;
+      errorMessage = 'Duplicate value error - product with this information already exists';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    res.status(statusCode).json({
       success: false,
-      error: error.message || 'Error updating product',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack,
+        name: error.name,
+        code: error.code
+      } : undefined
     });
   }
 }));
