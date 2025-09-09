@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
-import axiosInstance from '../axios/axios.config';
+import axiosInstance, { formatImageUrl } from '../axios/axios.config';
 
 /**
  * A section component that displays testimonials in a carousel format.
@@ -131,7 +131,7 @@ const TestimonialsSection = () => {
                     <img
                       src={testimonials[currentIndex].image.startsWith('http')
                         ? testimonials[currentIndex].image
-                        : `http://localhost:3001${testimonials[currentIndex].image}`}
+                         : formatImageUrl(testimonials[currentIndex].image)}
                       alt={testimonials[currentIndex].name}
                       className="w-full h-full object-cover"
                       onError={(e) => {

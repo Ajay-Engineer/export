@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -157,7 +159,7 @@ exports.api = onRequest(app);
 // For Cloud Run or direct running
 // --------------------
 if (require.main === module) {
-  const PORT = process.env.PORT || 3001;
+  const PORT = process.env.PORT || 3002;
   console.log(`Starting server on port ${PORT}...`);
 
   app.listen(PORT, '0.0.0.0', () => {

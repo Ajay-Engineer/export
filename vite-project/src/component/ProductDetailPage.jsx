@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Download, Mail, CheckCircle, Plus } from "lucide-react";
-import axiosInstance from "../axios/axios.config";
+import axiosInstance, { formatImageUrl } from "../axios/axios.config";
 
 const NAV = [
   { id: "about", label: "About" },
@@ -45,19 +45,6 @@ export default function ProductDetailPage({
     console.log('Benefits received:', benefits);
   }, [benefits]);
 
-  const formatImageUrl = (img) => {
-    if (!img) return null;
-    if (typeof img !== 'string') return img;
-    if (img.startsWith('http')) return img;
-
-    // @ts-ignore
-    const baseUrl = import.meta.env?.MODE === 'production'
-      ? 'https://rebecca-exim-api.herokuapp.com'
-      : import.meta.env?.VITE_API_BASE_URL || '';
-
-    // ensure leading slash
-    return img.startsWith('/') ? `${baseUrl}${img}` : `${baseUrl}/${img}`;
-  };
 
   useEffect(() => {
     const onScroll = () => {

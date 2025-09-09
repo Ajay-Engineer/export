@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Pencil, Trash2, Plus, X, LogOut, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
-import axiosInstance from '../axios/axios.config';
+import axiosInstance, { formatImageUrl } from '../axios/axios.config';
 import AdminBottomNav from './AdminBottomNav';
 import ProductCreateForm from './ProductCreateForm';
 
@@ -27,12 +27,6 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
 
-  const formatImageUrl = (img) => {
-    if (!img) return null;
-    if (img.startsWith("http")) return img;
-    const base = import.meta.env.MODE === 'production' ? 'https://rebecca-exim-api.herokuapp.com' : 'http://localhost:3001';
-    return img.startsWith('/') ? `${base}${img}` : `${base}/${img}`;
-  };
 
   const fetchProducts = async () => {
     setLoading(true);

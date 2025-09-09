@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import axiosInstance from "../axios/axios.config";
+import axiosInstance, { formatImageUrl } from "../axios/axios.config";
 import ProductCard from "../component/Productclass";
 import ProductDetailPage from "../component/ProductDetailPage";
 
@@ -60,17 +61,6 @@ const ProductList = ({ category, title, description }) => {
     }
   };
 
-  const formatImageUrl = (img) => {
-    if (!img) return "/placeholder.jpg"; // default fallback image
-    if (typeof img !== 'string') return img;
-    if (img.startsWith("http")) return img;
-
-    const baseUrl = import.meta.env.MODE === 'production'
-      ? 'https://rebecca-exim-api.herokuapp.com'
-      : 'http://localhost:3001';
-
-    return img.startsWith('/') ? `${baseUrl}${img}` : `${baseUrl}/${img}`;
-  };
 
   // Detail page
   if (selected) {

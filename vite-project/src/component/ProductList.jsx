@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import axiosInstance from "../axios/axios.config";
+import axiosInstance, { formatImageUrl } from "../axios/axios.config";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "./Productclass";
 import ProductDetailPage from "./ProductDetailPage";
@@ -113,9 +113,7 @@ const ProductList = ({ category, title, description }) => {
               <ProductCard
                 title={product.name || product.title}
                 description={product.description}
-                image={product.images?.[0]?.startsWith('http') 
-                  ? product.images[0] 
-                  : `http://localhost:3001${product.images?.[0]}`}
+                image={formatImageUrl(product.images?.[0])}
                 onLearnMore={() => setSelected(product)}
               />
             </motion.div>

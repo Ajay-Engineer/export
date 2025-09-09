@@ -63,4 +63,14 @@ axiosInstance.interceptors.response.use(
   }
 );
 
+// Utility function to construct image URLs using the same base URL as axios
+export const formatImageUrl = (img) => {
+  if (!img) return null;
+  if (typeof img !== 'string') return img;
+  if (img.startsWith('http')) return img;
+
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+  return img.startsWith('/') ? `${baseUrl}${img}` : `${baseUrl}/${img}`;
+};
+
 export default axiosInstance;

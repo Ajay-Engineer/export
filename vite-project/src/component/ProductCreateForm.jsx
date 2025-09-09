@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from 'prop-types';
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../axios/axios.config";
+import axiosInstance, { formatImageUrl } from "../axios/axios.config";
 
 const categories = [
   { name: "Health Mix", value: "health-mix" },
@@ -59,14 +59,6 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const formatImageUrl = (img) => {
-    if (!img) return null;
-    if (img.startsWith('http')) return img;
-    const baseUrl = import.meta.env.MODE === 'production'
-      ? 'https://rebecca-exim-api.herokuapp.com'
-      : 'http://localhost:3001';
-    return img.startsWith('/') ? `${baseUrl}${img}` : `${baseUrl}/${img}`;
-  };
 
   // Fetch all products for edit/delete
   const fetchProducts = async () => {

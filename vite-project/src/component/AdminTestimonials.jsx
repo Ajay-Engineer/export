@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
-import axiosInstance from '../axios/axios.config';
+import axiosInstance, { formatImageUrl } from '../axios/axios.config';
 
 import AdminBottomNav from './AdminBottomNav';
 
@@ -120,7 +120,7 @@ const AdminTestimonials = () => {
       image: null
     });
     if (testimonial.image) {
-      setImagePreview(`http://localhost:3001${testimonial.image}`);
+      setImagePreview(formatImageUrl(testimonial.image));
     }
     setEditId(testimonial._id);
   };
@@ -226,7 +226,7 @@ const AdminTestimonials = () => {
         {testimonials.map((testimonial) => (
           <div key={testimonial._id} className=" p-4 rounded-lg shadow flex gap-4">
             <img
-              src={`http://localhost:3001${testimonial.image}`}
+              src={formatImageUrl(testimonial.image)}
               alt={testimonial.name}
               className="w-24 h-24 object-cover rounded"
             />

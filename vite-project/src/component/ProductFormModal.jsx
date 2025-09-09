@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { formatImageUrl } from '../axios/axios.config';
 
 const ProductFormModal = ({ isEdit, product, onClose, onSubmit }) => {
   const [form, setForm] = useState({
@@ -29,7 +30,7 @@ const ProductFormModal = ({ isEdit, product, onClose, onSubmit }) => {
         specifications: product.specifications || {},
         images: product.images || []
       });
-      setImagePreview(product.images.map(img => `http://localhost:3001${img}`));
+      setImagePreview(product.images.map(img => formatImageUrl(img)));
     }
   }, [isEdit, product]);
 
