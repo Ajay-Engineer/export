@@ -45,15 +45,18 @@ const AdminCertificate = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     // Validate form
     if (!form.title.trim()) {
       setError('Title is required');
+      setLoading(false);
       return;
     }
 
     if (!editingId && !form.image) {
       setError('Image is required for new certificates');
+      setLoading(false);
       return;
     }
 
@@ -64,11 +67,13 @@ const AdminCertificate = () => {
         // Validate file type
         if (!form.image.type.startsWith('image/')) {
           setError('Please select a valid image file');
+          setLoading(false);
           return;
         }
         // Validate file size (5MB)
         if (form.image.size > 5 * 1024 * 1024) {
           setError('Image size must be less than 5MB');
+          setLoading(false);
           return;
         }
         formData.append('image', form.image);
@@ -97,6 +102,8 @@ const AdminCertificate = () => {
       console.error('Error saving certificate:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Failed to save certificate. Please try again.';
       setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,6 +117,7 @@ const AdminCertificate = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const response = await axiosInstance.delete(`${API_URL}/delete/${id}`);
 
@@ -124,6 +132,8 @@ const AdminCertificate = () => {
     } catch (error) {
       console.error('Error deleting certificate:', error);
       setError('Failed to delete certificate. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,8 +153,9 @@ const AdminCertificate = () => {
             value={form.title}
             onChange={handleChange}
             placeholder="Certificate Title"
-            className="border p-2 w-full rounded"
+            className={`border p-2 w-full rounded ${loading ? 'bg-gray-100 cursor-not-allowed' : ''}`}
             required
+            disabled={loading}
           />
         </div>
         <div>
@@ -153,18 +164,40 @@ const AdminCertificate = () => {
             name="image"
             accept="image/*"
             onChange={handleChange}
-            className="border p-2 w-full rounded"
+            className={`border p-2 w-full rounded ${loading ? 'bg-gray-100 cursor-not-allowed' : ''}`}
             required={!editingId}
+            disabled={loading}
           />
           <p className="text-sm text-gray-500 mt-1">
             Accepts JPG, PNG, GIF up to 5MB
           </p>
         </div>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-          {editingId ? 'Update' : 'Add'} Certificate
+        <button
+          type="submit"
+          className={`px-4 py-2 rounded text-white ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {editingId ? 'Updating...' : 'Adding...'}
+            </>
+          ) : (
+            `${editingId ? 'Update' : 'Add'} Certificate`
+          )}
         </button>
         {editingId && (
-          <button type="button" onClick={() => { setEditingId(null); setForm({ title: '', image: null }); }} className="ml-2 px-4 py-2 rounded bg-gray-400 text-white">Cancel</button>
+          <button
+            type="button"
+            onClick={() => { setEditingId(null); setForm({ title: '', image: null }); }}
+            className={`ml-2 px-4 py-2 rounded text-white ${loading ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-400 hover:bg-gray-500'}`}
+            disabled={loading}
+          >
+            Cancel
+          </button>
         )}
       </form>
       <div>
@@ -191,15 +224,17 @@ const AdminCertificate = () => {
                 <div className="flex justify-center space-x-2">
                   <button
                     onClick={() => handleEdit(cert)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition-colors"
+                    className={`px-3 py-1 rounded transition-colors text-white ${loading ? 'bg-yellow-400 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600'}`}
+                    disabled={loading}
                   >
-                    Edit
+                    {loading ? 'Loading...' : 'Edit'}
                   </button>
                   <button
                     onClick={() => handleDelete(cert._id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
+                    className={`px-3 py-1 rounded transition-colors text-white ${loading ? 'bg-red-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                    disabled={loading}
                   >
-                    Delete
+                    {loading ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>

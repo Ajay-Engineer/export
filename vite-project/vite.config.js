@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: 'build',
+    outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
     minify: 'terser',
@@ -20,15 +20,15 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: process.env.NODE_ENV === 'production'
-          ? 'https://rebecca-backendfinal.appspot.com'
+        target: process.env.NODE_ENV === 'production' 
+          ? 'https://rebecca-exim-api.herokuapp.com'
           : 'http://localhost:3001',
         changeOrigin: true,
         secure: process.env.NODE_ENV === 'production',
       },
       '/uploads': {
         target: process.env.NODE_ENV === 'production'
-          ? 'https://rebecca-backendfinal.appspot.com'
+          ? 'https://rebecca-exim-api.herokuapp.com'
           : 'http://localhost:3001',
         changeOrigin: true,
         secure: true,

@@ -31,21 +31,35 @@ const allowedOrigins = [
   'https://rebeccaexim.co.in',
   'http://localhost:3000',
   'http://localhost:5173',
-  'http://localhost:8080'
+  'http://192.168.29.17:3000 ',
+  'http://localhost:8080',
+  'http://192.168.29.17:3000',  // Added local IP
+  'https://rebecca-backendfinal.el.r.appspot.com'  // Added App Engine domain
 ];
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+// Development mode - allow all origins
+const corsOptions = process.env.NODE_ENV === 'development' 
+  ? {
+      origin: true, // Allow all origins in development
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
     }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-}));
+  : {
+      origin: function(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          console.log('Blocked origin:', origin); // Debug logging
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    };
+
+app.use(cors(corsOptions));
 
 // --------------------
 // Middleware
@@ -173,3 +187,5 @@ if (require.main === module) {
     process.exit(1);
   });
 }
+
+// Dummy comment to trigger nodemon restart

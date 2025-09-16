@@ -79,25 +79,6 @@ const TestimonialsSection = () => {
     );
   }
 
-  if (error) {
-    return (
-      <section className="w-full py-16 px-4 text-white bg-gray-800">
-        <div className="max-w-7xl mx-auto text-center">
-          {error}
-        </div>
-      </section>
-    );
-  }
-
-  if (testimonials.length === 0) {
-    return (
-      <section className="w-full py-16 px-4 text-white bg-gray-800">
-        <div className="max-w-7xl mx-auto text-center">
-          No testimonials available.
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section

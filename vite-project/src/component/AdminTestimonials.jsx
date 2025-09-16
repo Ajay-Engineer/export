@@ -15,6 +15,7 @@ const AdminTestimonials = () => {
   });
   const [editId, setEditId] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchTestimonials();
@@ -34,6 +35,8 @@ const AdminTestimonials = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     const formDataObj = new FormData();
     formDataObj.append('name', formData.name);
     formDataObj.append('companyName', formData.companyName);
@@ -76,6 +79,8 @@ const AdminTestimonials = () => {
       console.error('Error saving testimonial:', error);
       // Here you can add UI feedback for the error, like a toast notification
       alert('Failed to save testimonial: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -101,6 +106,7 @@ const AdminTestimonials = () => {
       return;
     }
 
+    setLoading(true);
     try {
       await axiosInstance.delete(`/testimonials/${id}`);
       console.log('Testimonial deleted successfully');
@@ -108,6 +114,8 @@ const AdminTestimonials = () => {
     } catch (error) {
       console.error('Error deleting testimonial:', error);
       alert('Failed to delete testimonial: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,8 +147,9 @@ const AdminTestimonials = () => {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${loading ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               required
+              disabled={loading}
             />
           </div>
           <div>
@@ -149,8 +158,9 @@ const AdminTestimonials = () => {
               type="text"
               value={formData.companyName}
               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${loading ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               required
+              disabled={loading}
             />
           </div>
           <div>
@@ -159,8 +169,9 @@ const AdminTestimonials = () => {
               type="text"
               value={formData.country}
               onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${loading ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               required
+              disabled={loading}
             />
           </div>
           <div>
@@ -168,8 +179,9 @@ const AdminTestimonials = () => {
             <textarea
               value={formData.quote}
               onChange={(e) => setFormData({ ...formData, quote: e.target.value })}
-              className="w-full p-2 border rounded h-24"
+              className={`w-full p-2 border rounded h-24 ${loading ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               required
+              disabled={loading}
             />
           </div>
           <div>
@@ -177,9 +189,10 @@ const AdminTestimonials = () => {
             <input
               type="file"
               onChange={handleImageChange}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${loading ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               accept="image/*"
               required={!editId}
+              disabled={loading}
             />
             {imagePreview && (
               <div className="mt-2">
@@ -194,9 +207,20 @@ const AdminTestimonials = () => {
           <div className="flex gap-2">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className={`px-4 py-2 rounded text-white ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+              disabled={loading}
             >
-              {editId ? 'Update' : 'Add'} Testimonial
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {editId ? 'Updating...' : 'Adding...'}
+                </>
+              ) : (
+                `${editId ? 'Update' : 'Add'} Testimonial`
+              )}
             </button>
             {editId && (
               <button
@@ -212,7 +236,8 @@ const AdminTestimonials = () => {
                   setImagePreview('');
                   setEditId(null);
                 }}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                className={`px-4 py-2 rounded text-white ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-500 hover:bg-gray-600'}`}
+                disabled={loading}
               >
                 Cancel Edit
               </button>
@@ -231,25 +256,25 @@ const AdminTestimonials = () => {
               className="w-24 h-24 object-cover rounded"
             />
             <div className="flex-1">
-              <h3 className="font-semibold">{testimonial.name}.{testimonial.companyName}</h3>
+              <h3 className="font-semibold">{testimonial.name}, {testimonial.companyName}</h3>
               <div className="text-gray-500 text-sm">
-                {testimonial.companyName && <span>{testimonial.companyName}</span>}
-                {testimonial.companyName && testimonial.country && <span> • </span>}
                 {testimonial.country && <span>{testimonial.country}</span>}
               </div>
               <p className="text-gray-600 text-sm mt-1">{testimonial.quote}</p>
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={() => handleEdit(testimonial)}
-                  className="p-1 hover:bg-gray-100 rounded"
+                  className={`p-1 rounded ${loading ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'}`}
+                  disabled={loading}
                 >
-                  <Pencil className="w-4 h-4 text-blue-600" />
+                  <Pencil className={`w-4 h-4 ${loading ? 'text-blue-400' : 'text-blue-600'}`} />
                 </button>
                 <button
                   onClick={() => handleDelete(testimonial._id)}
-                  className="p-1 hover:bg-gray-100 rounded"
+                  className={`p-1 rounded ${loading ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'}`}
+                  disabled={loading}
                 >
-                  <Trash2 className="w-4 h-4 text-red-600" />
+                  <Trash2 className={`w-4 h-4 ${loading ? 'text-red-400' : 'text-red-600'}`} />
                 </button>
               </div>
             </div>
