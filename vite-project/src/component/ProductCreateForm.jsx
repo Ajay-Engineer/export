@@ -40,11 +40,7 @@ const initialForm = {
     MOQ: "",
   },
   packaging: [{ title: "", content: "" }],
-  certifications: [
-    { src: "", alt: "GST Certificate", file: undefined },
-    { src: "", alt: "FSSAI Certificate", file: undefined },
-    { src: "", alt: "Export License", file: undefined }
-  ],
+  certifications: [], // Certificates are optional
   faqs: [{ q: "", a: "" }],
   related: [{ title: "", image: "", link: "" }]
 };
@@ -93,13 +89,9 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
   useEffect(() => {
     if (isEdit && product) {
       const formatted = { ...product };
-      // Ensure certifications shape - remove _id fields and handle properly
+      // Handle certifications - they are optional
       if (!formatted.certifications || !Array.isArray(formatted.certifications)) {
-        formatted.certifications = [
-          { src: "", alt: "GST Certificate", file: undefined },
-          { src: "", alt: "FSSAI Certificate", file: undefined },
-          { src: "", alt: "Export License", file: undefined }
-        ];
+        formatted.certifications = [];
       } else {
         formatted.certifications = formatted.certifications.map((c) => {
           // Remove _id field and ensure proper structure
@@ -1106,8 +1098,9 @@ const handleSubmit = async (e) => {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Add Certificate
+              Add Certificate (Optional)
             </button>
+            <p className="text-sm text-gray-500 mt-2">Certificates are optional. You can add them later if needed.</p>
           </div>
         </div>
 
