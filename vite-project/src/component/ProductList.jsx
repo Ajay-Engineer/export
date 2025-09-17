@@ -112,7 +112,7 @@ const ProductList = ({ category, title, description }) => {
             >
               <ProductCard
                 title={product.name || product.title}
-                description={product.description}
+                description={product.shortDescription || product.description}
                 image={formatImageUrl(product.images?.[0])}
                 onLearnMore={() => setSelected(product)}
               />

@@ -109,7 +109,7 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
       if (formatted.images && formatted.images.length > 0) {
         setImageFiles(formatted.images.map((img) => formatImageUrl(img)));
       } else {
-        setImageFiles([null]);
+        setImageFiles([undefined]);
       }
 
       // Fill the form excluding images (handled separately)
@@ -143,34 +143,100 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
   }, [imageFiles, formData.certifications]);
 
   const handleImageChange = (index, file) => {
+    console.log('Handling image change for index:', index, 'New file:', file);
+    
     setImageFiles(prev => {
-      const filteredFiles = prev.filter(f => f !== undefined);
-      if (filteredFiles.length >= 4 && file) {
+      const currentFiles = [...prev];
+      
+      // Validate file size before proceeding
+      if (file && file.size > MAX_FILE_SIZE) {
+        alert(`File size exceeds 5MB limit. Please compress the image or choose a smaller file.`);
+        return prev;
+      }
+      
+      // Count actual files (excluding undefined/null)
+      const actualFileCount = prev.filter(f => f !== undefined && f !== null).length;
+      const isReplacing = currentFiles[index] !== undefined && currentFiles[index] !== null;
+      
+      // Check if we're at the limit when adding a new image
+      if (!isReplacing && actualFileCount >= 4) {
+        alert('Maximum 4 images allowed');
+        return prev;
+      }
+      
+      // Clean up previous file if it exists
+      if (currentFiles[index] instanceof File) {
+        URL.revokeObjectURL(URL.createObjectURL(currentFiles[index]));
+      }
+      
+      // Update the file at this index
+      currentFiles[index] = file;
+      
+      // Update the files array with the new file
+      currentFiles[index] = file;
+      
+      // Clean up empty slots at the end
+      while (currentFiles.length > 0 && 
+             (currentFiles[currentFiles.length - 1] === undefined || 
+              currentFiles[currentFiles.length - 1] === null)) {
+        currentFiles.pop();
+      }
+      
+      // Add an empty slot at the end if we have less than 4 images
+      if (currentFiles.filter(f => f !== undefined && f !== null).length < 4) {
+        currentFiles.push(undefined);
+      }
+      
+      console.log('Updated image files:', currentFiles);
+      return currentFiles;
+
+      if (currentNonUndefinedCount >= 4 && file && !isReplacingExisting) {
         alert('Maximum 4 images allowed');
         return prev;
       }
 
       const newFiles = [...prev];
+
       // If there's an existing file at this index and it's a File object,
       // revoke its object URL to prevent memory leaks
       if (newFiles[index] instanceof File) {
         URL.revokeObjectURL(URL.createObjectURL(newFiles[index]));
       }
+
+      // Set the new file at the specified index
       newFiles[index] = file;
       return newFiles;
     });
   };
 
   const addImageField = () => {
-    if (imageFiles.filter(f => f !== undefined).length >= 4) {
+    // Count actual files (excluding undefined/null)
+    const actualFileCount = imageFiles.filter(f => f !== undefined && f !== null).length;
+    
+    if (actualFileCount >= 4) {
       alert('Maximum 4 images allowed');
       return;
     }
-    setImageFiles((prev) => [...prev, undefined]);
+    
+    setImageFiles(prev => {
+      // Remove any trailing undefined/null values
+      const cleanedFiles = prev.filter(f => f !== undefined && f !== null);
+      // Add a new undefined slot
+      return [...cleanedFiles, undefined];
+    });
   };
 
   const removeImageField = (index) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => {
+      const newFiles = [...prev];
+      // If it's a File object, revoke its object URL to prevent memory leaks
+      if (newFiles[index] instanceof File) {
+        URL.revokeObjectURL(URL.createObjectURL(newFiles[index]));
+      }
+      // Replace with undefined instead of removing to preserve indices
+      newFiles[index] = undefined;
+      return newFiles;
+    });
   };
 
   const handleArrayChange = (arrayName, index, field, value) => {
@@ -283,6 +349,9 @@ const handleSubmit = async (e) => {
     setError(null);
 
     try {
+      setLoading(true);
+      setError(null);
+      
       // Validate required fields
       const requiredFields = ['title', 'slug', 'category', 'shortDescription', 'description'];
       const missingFields = requiredFields.filter(field => !formData[field]);
@@ -312,8 +381,17 @@ const handleSubmit = async (e) => {
         }
       }
 
-      // Create FormData
+      // Create FormData and validate images
       const formDataToSend = new FormData();
+      
+      // Validate images before proceeding
+      const hasInvalidImages = imageFiles.some(file => 
+        file instanceof File && file.size > MAX_FILE_SIZE
+      );
+      
+      if (hasInvalidImages) {
+        throw new Error('One or more images exceed the 5MB size limit. Please compress them or choose smaller files.');
+      }
 
       // Handle certificates first
       const processedCerts = [];
@@ -349,29 +427,22 @@ const handleSubmit = async (e) => {
         formDataToSend.append('certificationsData', JSON.stringify([]));
       }
 
-      // Handle images
-      const existingImages = imageFiles.filter(file => 
-        typeof file === 'string' && file.includes('cloudinary')
-      );
-      const newImages = imageFiles.filter(file => file instanceof File);
-
-      // Handle images - ensure we always send valid data
-      try {
-        if (existingImages && Array.isArray(existingImages) && existingImages.length > 0) {
-          formDataToSend.append('existingImages', JSON.stringify(existingImages));
-        } else {
-          formDataToSend.append('existingImages', JSON.stringify([]));
+      // Handle images - process both existing and new images
+      const existingImages = imageFiles.map(file => {
+        if (typeof file === 'string' && file.includes('cloudinary')) {
+          return file; // Keep existing Cloudinary URLs
         }
-      } catch (err) {
-        console.error('Error serializing existing images:', err);
-        formDataToSend.append('existingImages', JSON.stringify([]));
-      }
-      
-      if (newImages && Array.isArray(newImages) && newImages.length > 0) {
+        return null; // Placeholder for new images
+      });
+
+      // Append existing images to form data
+      formDataToSend.append('existingImages', JSON.stringify(existingImages));
+
+      // Handle new image files
+      const newImages = imageFiles.filter(file => file instanceof File);
+      if (newImages.length > 0) {
         newImages.forEach(file => {
-          if (file instanceof File) {
-            formDataToSend.append('images', file);
-          }
+          formDataToSend.append('images', file);
         });
       }
 
@@ -685,10 +756,9 @@ const handleSubmit = async (e) => {
       console.log('FAQs array:', formattedData.faqs);
       console.log('Related array:', formattedData.related);
 
-      // Handle existing images
+      // Handle existing images - keep all existing images as-is
       if (prod.images && Array.isArray(prod.images)) {
-        const existingImages = prod.images.map(img => typeof img === 'string' ? img : undefined);
-        setImageFiles(existingImages.length > 0 ? existingImages : [undefined]);
+        setImageFiles(prod.images.length > 0 ? prod.images : [undefined]);
       } else {
         setImageFiles([undefined]);
       }
@@ -738,7 +808,7 @@ const handleSubmit = async (e) => {
       setProducts(products.filter((p) => p._id !== id));
       if (editId === id) {
         setFormData(initialForm);
-        setImageFiles([null]);
+        setImageFiles([undefined]);
         setEditId(null);
       }
       alert("Product deleted successfully!");
@@ -939,7 +1009,7 @@ const handleSubmit = async (e) => {
                     </span>
                   </label>
                 </div>
-                {imageFiles.length > 1 && (
+                {imageFiles.filter(f => f !== undefined).length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeImageField(index)}
@@ -955,7 +1025,8 @@ const handleSubmit = async (e) => {
             <button
               type="button"
               onClick={addImageField}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              disabled={imageFiles.filter(f => f !== undefined).length >= 4}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1283,7 +1354,7 @@ const handleSubmit = async (e) => {
               className="flex-1 inline-flex justify-center items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
               onClick={() => {
                 setFormData(initialForm);
-                setImageFiles([null]);
+                setImageFiles([undefined]);
                 setEditId(null);
               }}
               disabled={loading}
@@ -1295,11 +1366,12 @@ const handleSubmit = async (e) => {
       </form>
 
       {/* Product List for Edit/Delete */}
-      <div className="max-w-4xl mx-auto mt-10 px-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold text-gray-800">All Products</h3>
-          <div className="text-sm text-gray-500">{Array.isArray(products) ? products.length : 0} products</div>
-        </div>
+      <div className="max-w-4xl mx-auto mt-10">
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-2xl font-bold text-gray-800">All Products</h3>
+            <div className="text-sm text-gray-500">{Array.isArray(products) ? products.length : 0} products</div>
+          </div>
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -1357,6 +1429,7 @@ const handleSubmit = async (e) => {
           </div>
         </div>
       </div>
+    </div>
     </>
   );
 }

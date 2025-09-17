@@ -32,7 +32,7 @@ const EggProducts = () => {
       </div>
 
       {/* Content Section */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className=" mx-auto px-4 py-16">
         {/* Product List Component */}
         <ProductList
           category="egg"

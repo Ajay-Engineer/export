@@ -2,14 +2,16 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Download, Mail, CheckCircle, Plus } from "lucide-react";
+// Assuming these are correctly configured
 import axiosInstance, { formatImageUrl } from "../axios/axios.config";
 
+// This is a static navigation array. You can define it outside the component.
 const NAV = [
   { id: "about", label: "About" },
   { id: "benefits", label: "Benefits" },
   { id: "specs", label: "Specs" },
   { id: "pack", label: "Packaging" },
-  { id: "certs", label: "Certifications" },
+  // { id: "certs", label: "Certifications" },
   { id: "faqs", label: "FAQs" },
 ];
 
@@ -38,35 +40,59 @@ export default function ProductDetailPage({
   const [showFaqForm, setShowFaqForm] = useState(false);
   const [newBenefit, setNewBenefit] = useState({ title: '', description: '' });
   const [newFaq, setNewFaq] = useState({ q: '', a: '' });
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  
-  // Debug log for benefits
+  // Set initial selected image to mainImage if it exists, otherwise the first image
+  const initialImage = mainImage || (images.length > 0 ? images[0] : null);
+  const [selectedImage, setSelectedImage] = useState(initialImage);
+
+  // Use a second useEffect to update the main image when images prop changes
   useEffect(() => {
-    console.log('Benefits received:', benefits);
-  }, [benefits]);
+    const newInitialImage = mainImage || (images.length > 0 ? images[0] : null);
+    setSelectedImage(newInitialImage);
+  }, [mainImage, images]);
 
-
+  // Handle scroll to update active nav item
   useEffect(() => {
     const onScroll = () => {
-      NAV.forEach(({ id }) => {
+      // Create a copy of NAV to avoid direct mutation
+      [...NAV].reverse().forEach(({ id }) => {
         const el = document.getElementById(id);
         if (el) {
-          const top = el.getBoundingClientRect().top;
-          if (top < 150 && top > -el.offsetHeight + 150) setActive(id);
+          const rect = el.getBoundingClientRect();
+          // Check if the top of the section is near the top of the viewport
+          if (rect.top <= 100) {
+            setActive(id);
+            return; // Found the active section, so we can stop
+          }
         }
       });
     };
     window.addEventListener("scroll", onScroll);
+    // Cleanup function
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const handleThumbnailClick = (image) => {
+    setSelectedImage(image);
+  };
+  
+  const handleNextImage = () => {
+    const currentIndex = images.findIndex(img => img === selectedImage);
+    const nextIndex = (currentIndex + 1) % images.length;
+    setSelectedImage(images[nextIndex]);
+  };
+  
+  const handlePrevImage = () => {
+    const currentIndex = images.findIndex(img => img === selectedImage);
+    const prevIndex = (currentIndex - 1 + images.length) % images.length;
+    setSelectedImage(images[prevIndex]);
+  };
 
   return (
     <div className="bg-[#f8f9fb] text-gray-900 w-full">
       {/* Sticky Nav + CTAs */}
-      <div className="sticky top-0 bg-white shadow z-30 border-b w-full">
-        <div className="w-full max-w-[1440px] mx-auto px-6 py-3 flex justify-between items-center">
-          <nav className="text-sm text-gray-600">
+      <header className="bg-white shadow z-30 border-b w-full">
+        <div className="w-full mx-auto px-6 py-3 flex justify-between items-center">
+          <nav className="text-sm text-gray-600 flex-1">
             <a href="/" className="hover:underline">Home</a> /{" "}
             <a href="/products" className="hover:underline">Products</a> /{" "}
             <span className="font-medium">{title}</span>
@@ -83,7 +109,11 @@ export default function ProductDetailPage({
             )}
           </div>
         </div>
-        <div className="w-full max-w-[1440px] mx-auto px-6">
+      </header>
+      
+      {/* Sub Navigation */}
+      <nav className="bg-white shadow-sm z-20 border-b w-full">
+        <div className="w-full mx-auto px-6">
           <div className="flex space-x-6 overflow-x-auto py-2">
             {NAV.map((navItem) => (
               <a
@@ -100,106 +130,65 @@ export default function ProductDetailPage({
             ))}
           </div>
         </div>
-      </div>
+      </nav>
 
       {/* Hero Section */}
-      <section className="w-full px-0 py-10">
-        <div className="max-w-[1440px] mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Image Display */}
-            <div className="lg:col-span-2">
-              {((mainImage || (images && images.length > 0))) && (
-                <motion.div
-                  className="relative overflow-hidden rounded-xl shadow-lg bg-gray-100 group"
-                  variants={fadeIn}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  <img
-                    src={formatImageUrl(images && images.length > 0 ? images[selectedImageIndex] : mainImage)}
-                    alt={title}
-                    className="w-full h-[500px] object-cover hover:scale-105 transition-transform duration-500"
-                  />
-
-                  {/* Navigation Arrows */}
-                  {images && images.length > 1 && (
-                    <>
-                      <button
-                        onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : images.length - 1)}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setSelectedImageIndex(prev => prev < images.length - 1 ? prev + 1 : 0)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </>
-                  )}
-
-                  {/* Image Counter */}
-                  {images && images.length > 1 && (
-                    <div className="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
-                      {selectedImageIndex + 1} / {images.length}
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* Video Section */}
+      <section className="w-full bg-white py-12 px-0">
+        <div className="w-full mx-auto px-6 flex flex-col lg:flex-row gap-8">
+          <div className="w-full">
+            <div className="relative">
+              {/* This is the corrected line */}
+              <img
+                src={formatImageUrl(selectedImage)}
+                alt={title}
+                className="w-full h-auto max-h-[400px] sm:max-h-[500px] md:max-h-[600px] object-contain rounded-lg shadow mx-auto"
+              />
               {videoUrl && (
-                <motion.div
-                  className="relative pb-[56.25%] h-0 overflow-hidden rounded-xl shadow-lg mt-6"
-                  variants={fadeIn}
-                  initial="hidden"
-                  animate="visible"
+                <a
+                  href={videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-red-700 transition"
                 >
-                  <iframe
-                    src={videoUrl}
-                    title="Product Video"
-                    className="absolute top-0 left-0 w-full h-full rounded-xl"
-                    allowFullScreen
-                  />
-                </motion.div>
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.75-11.25v5.5a.75.75 0 001.15.62l4.5-2.75a.75.75 0 000-1.24l-4.5-2.75a.75.75 0 00-1.15.62z" />
+                  </svg>
+                  Watch Video
+                </a>
               )}
             </div>
-
-            {/* Image Gallery Thumbnails */}
-            {images && images.length > 1 && (
-              <div className="lg:col-span-1">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Product Images</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {images.map((image, index) => (
-                    <motion.div
-                      key={index}
-                      className={`relative cursor-pointer rounded-lg overflow-hidden shadow-md transition-all duration-300 ${
-                        selectedImageIndex === index
-                          ? 'ring-2 ring-blue-500 shadow-xl'
-                          : 'hover:shadow-lg'
-                      }`}
-                      onClick={() => setSelectedImageIndex(index)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <img
-                        src={formatImageUrl(image)}
-                        alt={`${title} - Image ${index + 1}`}
-                        className="w-full h-24 object-cover"
-                      />
-                      {selectedImageIndex === index && (
-                        <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
-                          <div className="bg-blue-500 text-white rounded-full p-1">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
+            {images.length > 1 && (
+              <div className="mt-4 flex items-center space-x-2 overflow-x-auto justify-center">
+                <button
+                  onClick={handlePrevImage}
+                  className="p-1 sm:p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                {images.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={formatImageUrl(img)}
+                    alt={`${title} ${idx + 1}`}
+                    className={`w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-lg cursor-pointer border-2 ${
+                      selectedImage === img
+                        ? "border-red-600"
+                        : "border-transparent hover:border-gray-300"
+                    }`}
+                    onClick={() => handleThumbnailClick(img)}
+                  />
+                ))}
+                <button
+                  onClick={handleNextImage}
+                  className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                </button>
               </div>
             )}
           </div>
@@ -311,7 +300,6 @@ export default function ProductDetailPage({
         </div>
       </motion.section>
 
-              
       <motion.section
         id="specs"
         className="w-full bg-white py-12 px-0"

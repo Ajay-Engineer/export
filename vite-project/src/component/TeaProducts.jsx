@@ -40,7 +40,7 @@ const TeaProducts = () => {
       </div>
 
       {/* Content Section */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-8xl mx-auto px-2 py-16">
         {/* Product List Component */}
         <ProductList
           category="tea"

@@ -408,18 +408,7 @@ router.post('/', upload, asyncHandler(async (req, res) => {
 }));
 
 // Update product - handle both JSON and multipart/form-data
-router.put('/:id', (req, res, next) => {
-  // Check if this is a JSON request or form-data
-  const contentType = req.headers['content-type'] || '';
-
-  if (contentType.includes('multipart/form-data')) {
-    // Use multer middleware for file uploads
-    return upload(req, res, next);
-  } else {
-    // Skip multer for JSON requests
-    next();
-  }
-}, asyncHandler(async (req, res) => {
+router.put('/:id', upload, asyncHandler(async (req, res) => {
   try {
     // Configure Cloudinary at runtime
     configureCloudinary();
@@ -435,68 +424,92 @@ router.put('/:id', (req, res, next) => {
       });
     }
 
-    const contentType = req.headers['content-type'] || '';
-    const isMultipart = contentType.includes('multipart/form-data');
+    // Note: Multer middleware now handles both JSON and multipart requests
 
     let processedCertifications = [];
     let allImages = [];
 
-    if (isMultipart) {
-      // Handle multipart/form-data with file uploads
-      console.log('Processing multipart request with files');
+    // Handle certificates
+    const certifications = safeJSONParse(req.body.certificationsData, []);
 
-      // Process certificates
-      const certifications = safeJSONParse(req.body.certificationsData, []);
+    // Handle certificate files - upload them to Cloudinary and store URLs
+    if (req.files && req.files.certificateFiles) {
+      const certFiles = Array.isArray(req.files.certificateFiles)
+        ? req.files.certificateFiles
+        : [req.files.certificateFiles];
 
-      // Handle certificate files - upload them to Cloudinary and store URLs
-      if (req.files && req.files.certificateFiles) {
-        const certFiles = Array.isArray(req.files.certificateFiles)
-          ? req.files.certificateFiles
-          : [req.files.certificateFiles];
+      for (let i = 0; i < Math.min(certFiles.length, certifications.length); i++) {
+        const certFile = certFiles[i];
+        const cert = certifications[i];
 
-        for (let i = 0; i < Math.min(certFiles.length, certifications.length); i++) {
-          const certFile = certFiles[i];
-          const cert = certifications[i];
-
-          if (certFile && cert) {
-            processedCertifications.push({
-              src: certFile.path, // Cloudinary URL
-              alt: cert.alt || 'Certificate'
-            });
-          }
-        }
-      } else if (certifications && certifications.length > 0) {
-        // If no new files but we have existing certificate data
-        for (const cert of certifications) {
-          if (cert.src && cert.src.trim() !== '') {
-            processedCertifications.push({
-              src: cert.src,
-              alt: cert.alt || 'Certificate'
-            });
-          }
+        if (certFile && cert) {
+          processedCertifications.push({
+            src: certFile.path, // Cloudinary URL
+            alt: cert.alt || 'Certificate'
+          });
         }
       }
+    } else if (certifications && certifications.length > 0) {
+      // If no new files but we have existing certificate data
+      for (const cert of certifications) {
+        if (cert.src && cert.src.trim() !== '') {
+          processedCertifications.push({
+            src: cert.src,
+            alt: cert.alt || 'Certificate'
+          });
+        }
+      }
+    } else {
+      // Preserve existing certifications for JSON requests
+      processedCertifications = existingProduct.certifications || [];
+    }
 
-      // Handle product images
+    // Handle product images
+    if (req.body.existingImages) {
+      // Parse existing images
       const existingImages = safeJSONParse(req.body.existingImages, []);
+      console.log('Existing images:', existingImages);
+
+      // Get new image uploads
       const newImageFiles = req.files?.images || [];
+      console.log('New image files:', newImageFiles);
 
       // Process new image uploads
       let newImageUrls = [];
       if (Array.isArray(newImageFiles)) {
-        newImageUrls = newImageFiles.map(file => file.path); // Cloudinary URLs
-      } else if (newImageFiles.path) {
-        // Single file case
+        newImageUrls = newImageFiles.map(file => file.path);
+      } else if (newImageFiles && newImageFiles.path) {
         newImageUrls = [newImageFiles.path];
       }
+      console.log('New image URLs:', newImageUrls);
 
-      // Combine existing and new images, filter out any empty values
-      allImages = [...existingImages, ...newImageUrls].filter(img => img && img.trim() !== '');
+      // Remove old images that are being replaced
+      const imagesToKeep = existingImages.filter(img => img !== null && img !== undefined);
+      
+      // Delete removed images from Cloudinary
+      const removedImages = existingProduct.images.filter(img => 
+        img && !imagesToKeep.includes(img) && img.includes('cloudinary')
+      );
+
+      // Delete removed images from Cloudinary
+      for (const img of removedImages) {
+        try {
+          const publicId = img.split('/').pop().split('.')[0];
+          await cloudinary.uploader.destroy(publicId);
+          console.log('Deleted old image:', publicId);
+        } catch (error) {
+          console.error('Error deleting old image:', error);
+        }
+      }
+
+      // Combine existing and new images, preserving order
+      allImages = [...imagesToKeep, ...newImageUrls].filter(img => img && img.trim() !== '');
+
+      console.log('Final combined images:', allImages);
     } else {
-      // Handle JSON request - preserve existing images and certifications
-      console.log('Processing JSON request - preserving existing files');
+      // JSON request - preserve existing images
+      console.log('Processing JSON request - preserving existing images');
       allImages = existingProduct.images || [];
-      processedCertifications = existingProduct.certifications || [];
     }
 
     // Prepare update data
@@ -515,21 +528,21 @@ router.put('/:id', (req, res, next) => {
       datasheetUrl: req.body.datasheetUrl || existingProduct.datasheetUrl
     };
 
-    // Update certifications if we have processed some
-    if (processedCertifications.length > 0) {
-      updateData.certifications = processedCertifications;
+    // Regenerate slug if title changed
+    if (req.body.title && req.body.title !== existingProduct.title) {
+      updateData.slug = slugify(req.body.title, { lower: true, strict: true });
     }
 
-    // Update images if we have them
-    if (allImages.length > 0) {
-      updateData.images = allImages;
-    }
+    // Update certifications - always set to preserve deletions
+    updateData.certifications = processedCertifications;
+
+    // Update images - always set to preserve deletions
+    updateData.images = allImages;
 
     console.log('Final update data:', {
       ...updateData,
       imageCount: updateData.images ? updateData.images.length : 0,
-      certificationCount: processedCertifications.length,
-      isMultipart
+      certificationCount: processedCertifications.length
     });
 
     console.log('Updating product with ID:', id);
