@@ -26,9 +26,12 @@ const initialForm = {
   visibility: "public",
   shortDescription: "",
   description: "",
+  descriptionFormat: "paragraph", // "paragraph" or "points"
+  descriptionPoints: [""], // For points format
   videoUrl: "",
   datasheetUrl: "",
   benefits: [{ title: "", description: "" }],
+  benefitsFormat: "structured",
   specifications: {
     "Botanical Source": "",
     Form: "",
@@ -39,7 +42,8 @@ const initialForm = {
     pH: "",
     MOQ: "",
   },
-  packaging: [{ title: "", content: "" }],
+  packaging: [{ title: "", content: "", contentFormat: "paragraph", contentPoints: [""] }],
+  packagingFormat: "array",
   certifications: [], // Certificates are optional
   faqs: [{ q: "", a: "" }],
   related: [{ title: "", image: "", link: "" }]
@@ -112,9 +116,33 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
         setImageFiles([undefined]);
       }
 
+      // Detect description format and set appropriate values
+      const isDescriptionArray = Array.isArray(formatted.description);
+      const descriptionFormat = isDescriptionArray ? 'points' : 'paragraph';
+      const descriptionValue = isDescriptionArray ? '' : (formatted.description || '');
+      const descriptionPoints = isDescriptionArray ? formatted.description : [''];
+
+      // Detect benefits format and set appropriate values
+      const isBenefitsArray = Array.isArray(formatted.benefits);
+      const isBenefitsPoints = isBenefitsArray && formatted.benefits.length > 0 && typeof formatted.benefits[0] === 'string';
+      const isBenefitsStructured = isBenefitsArray && formatted.benefits.length > 0 && typeof formatted.benefits[0] === 'object';
+
+      const benefitsFormat = isBenefitsPoints ? 'points' : 'structured';
+      const benefitsValue = isBenefitsStructured ? formatted.benefits : initialForm.benefits;
+      const benefitsPoints = isBenefitsPoints ? formatted.benefits : [''];
+
       // Fill the form excluding images (handled separately)
       const { images, ...rest } = formatted;
-      setFormData((prev) => ({ ...prev, ...rest }));
+      setFormData((prev) => ({
+        ...prev,
+        ...rest,
+        description: descriptionValue,
+        descriptionFormat: descriptionFormat,
+        descriptionPoints: descriptionPoints,
+        benefits: benefitsValue,
+        benefitsFormat: benefitsFormat,
+        benefitsPoints: benefitsPoints
+      }));
       setEditId(product._id || null);
     }
   }, [isEdit, product]);
@@ -123,6 +151,84 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const handleDescriptionFormatChange = (format) => {
+    setFormData((prev) => ({
+      ...prev,
+      descriptionFormat: format,
+      description: format === "paragraph" ? prev.description : "",
+      descriptionPoints: format === "points" ? prev.descriptionPoints : [""]
+    }));
+  };
+
+  const handleBenefitsFormatChange = (format) => {
+    setFormData((prev) => ({
+      ...prev,
+      benefitsFormat: format,
+      benefits: format === "structured" ? prev.benefits : []
+    }));
+  };
+
+  const handleDescriptionPointChange = (index, value) => {
+    const updatedPoints = [...formData.descriptionPoints];
+    updatedPoints[index] = value;
+    setFormData((prev) => ({ ...prev, descriptionPoints: updatedPoints }));
+  };
+
+  const addDescriptionPoint = () => {
+    setFormData((prev) => ({
+      ...prev,
+      descriptionPoints: [...prev.descriptionPoints, ""]
+    }));
+  };
+
+  const removeDescriptionPoint = (index) => {
+    if (formData.descriptionPoints.length > 1) {
+      const updatedPoints = formData.descriptionPoints.filter((_, i) => i !== index);
+      setFormData((prev) => ({ ...prev, descriptionPoints: updatedPoints }));
+    }
+  };
+
+
+  const handlePackagingFormatChange = (format) => {
+    setFormData((prev) => ({
+      ...prev,
+      packagingFormat: format,
+      packaging: format === "array" ? prev.packaging : [{ title: "", content: "", contentFormat: "paragraph", contentPoints: [""] }]
+    }));
+  };
+
+  const handlePackagingContentFormatChange = (index, format) => {
+    const updated = [...formData.packaging];
+    updated[index].contentFormat = format;
+    if (format === "paragraph") {
+      updated[index].content = updated[index].contentPoints.filter(p => p.trim()).join('\n');
+    } else {
+      updated[index].contentPoints = updated[index].content ? updated[index].content.split('\n').filter(p => p.trim()) : [""];
+    }
+    setFormData({ ...formData, packaging: updated });
+  };
+
+  const handlePackagingContentPointChange = (itemIndex, pointIndex, value) => {
+    const updated = [...formData.packaging];
+    updated[itemIndex].contentPoints[pointIndex] = value;
+    setFormData({ ...formData, packaging: updated });
+  };
+
+  const addPackagingContentPoint = (itemIndex) => {
+    const updated = [...formData.packaging];
+    updated[itemIndex].contentPoints.push("");
+    setFormData({ ...formData, packaging: updated });
+  };
+
+  const removePackagingContentPoint = (itemIndex, pointIndex) => {
+    const updated = [...formData.packaging];
+    if (updated[itemIndex].contentPoints.length > 1) {
+      updated[itemIndex].contentPoints.splice(pointIndex, 1);
+    }
+    setFormData({ ...formData, packaging: updated });
+  };
+
 
   // Clean up object URLs when component unmounts
   useEffect(() => {
@@ -265,10 +371,10 @@ const ProductCreateForm = function({ isEdit = false, product = null, onSubmit, o
       // Ensure we always have at least one item in each section
       if (newArray.length === 0) {
         let defaultItem;
-        if (arrayName === 'benefits') {
+        if (arrayName === 'benefits' && prev.benefitsFormat === 'structured') {
           defaultItem = { title: "", description: "" };
-        } else if (arrayName === 'packaging') {
-          defaultItem = { title: "", content: "" };
+        } else if (arrayName === 'packaging' && prev.packagingFormat === 'array') {
+          defaultItem = { title: "", content: "", contentFormat: "paragraph", contentPoints: [""] };
         } else if (arrayName === 'faqs') {
           defaultItem = { q: "", a: "" };
         } else if (arrayName === 'related') {
@@ -353,10 +459,23 @@ const handleSubmit = async (e) => {
       setError(null);
       
       // Validate required fields
-      const requiredFields = ['title', 'slug', 'category', 'shortDescription', 'description'];
+      const requiredFields = ['title', 'slug', 'category', 'shortDescription'];
       const missingFields = requiredFields.filter(field => !formData[field]);
       if (missingFields.length > 0) {
         throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      }
+
+      // Validate description based on format
+      if (formData.descriptionFormat === "paragraph" && !formData.description.trim()) {
+        throw new Error("Please fill in the description paragraph");
+      }
+      if (formData.descriptionFormat === "points" && formData.descriptionPoints.some(point => !point.trim())) {
+        throw new Error("Please fill in all description points");
+      }
+
+      // Validate benefits
+      if (formData.benefits.some(benefit => !benefit.title.trim() || !benefit.description.trim())) {
+        throw new Error("Please fill in all benefit titles and descriptions");
       }
       
       // Validate form data structure
@@ -451,7 +570,16 @@ const handleSubmit = async (e) => {
       formDataToSend.append('category', formData.category);
       formDataToSend.append('visibility', formData.visibility);
       formDataToSend.append('shortDescription', formData.shortDescription);
-      formDataToSend.append('description', formData.description);
+
+      // Handle description based on format
+      if (formData.descriptionFormat === "paragraph") {
+        formDataToSend.append('description', formData.description);
+      } else {
+        const cleanedPoints = formData.descriptionPoints
+          .filter(point => point.trim())
+          .map(point => point.replace(/^\*\s*/, '').trim());
+        formDataToSend.append('description', JSON.stringify(cleanedPoints));
+      }
       
       // Validate and add specifications
       try {
@@ -480,7 +608,21 @@ const handleSubmit = async (e) => {
       // Validate and add packaging
       try {
         if (Array.isArray(formData.packaging) && formData.packaging.length > 0) {
-          formDataToSend.append('packaging', JSON.stringify(formData.packaging));
+          const processedPackaging = formData.packaging.map(pkg => {
+            const { contentFormat, contentPoints, ...rest } = pkg;
+            if (contentFormat === "points") {
+              return {
+                ...rest,
+                content: contentPoints.filter(p => p.trim()).map(p => `* ${p.replace(/^\*\s*/, '').trim()}`).join('\n')
+              };
+            } else {
+              return {
+                ...rest,
+                content: pkg.content
+              };
+            }
+          });
+          formDataToSend.append('packaging', JSON.stringify(processedPackaging));
         } else {
           formDataToSend.append('packaging', JSON.stringify(initialForm.packaging));
         }
@@ -639,7 +781,10 @@ const handleSubmit = async (e) => {
         );
 
         // Properly reset all form states
-        setFormData(initialForm);
+        setFormData({
+          ...initialForm,
+          benefitsFormat: "structured"
+        });
         setImageFiles([undefined]);
         setEditId(null);
 
@@ -713,7 +858,20 @@ const handleSubmit = async (e) => {
   const handleEdit = async (prod) => {
     try {
       console.log('Editing product:', prod);
-      
+
+      // Detect description format and set appropriate values
+      const isDescriptionArray = Array.isArray(prod.description);
+      const descriptionFormat = isDescriptionArray ? 'points' : 'paragraph';
+      const descriptionValue = isDescriptionArray ? '' : (prod.description || '');
+      const descriptionPoints = isDescriptionArray ? prod.description : [''];
+
+      // Detect benefits format and set appropriate values
+      const isBenefitsArray = Array.isArray(prod.benefits);
+      const isBenefitsStructured = isBenefitsArray && prod.benefits.length > 0 && typeof prod.benefits[0] === 'object';
+
+      const benefitsFormat = 'structured';
+      const benefitsValue = isBenefitsStructured ? prod.benefits : initialForm.benefits;
+
       // Create formatted data with all necessary fields
       const formattedData = {
         title: prod.title || '',
@@ -721,17 +879,27 @@ const handleSubmit = async (e) => {
         category: prod.category || '',
         visibility: prod.visibility || 'public', // Add missing visibility property
         shortDescription: prod.shortDescription || '',
-        description: prod.description || '',
+        description: descriptionValue,
+        descriptionFormat: descriptionFormat,
+        descriptionPoints: descriptionPoints,
         videoUrl: prod.videoUrl || '',
         datasheetUrl: prod.datasheetUrl || '',
-        benefits: Array.isArray(prod.benefits) && prod.benefits.length > 0 
-          ? prod.benefits 
-          : initialForm.benefits,
+        benefits: benefitsValue,
+        benefitsFormat: benefitsFormat,
         specifications: prod.specifications || initialForm.specifications,
-        packaging: Array.isArray(prod.packaging) && prod.packaging.length > 0 
-          ? prod.packaging 
-          : initialForm.packaging,
-        certifications: Array.isArray(prod.certifications) 
+        packaging: Array.isArray(prod.packaging) ? prod.packaging.map(pkg => {
+          const contentStr = pkg.content || "";
+          const hasNewlines = contentStr.includes('\n');
+          const isPoints = hasNewlines && contentStr.split('\n').some(line => line.trim().startsWith('*'));
+          return {
+            title: pkg.title || "",
+            content: isPoints ? "" : contentStr,
+            contentFormat: isPoints ? "points" : "paragraph",
+            contentPoints: isPoints ? contentStr.split('\n').map(line => line.replace(/^\*\s*/, '').trim()).filter(p => p) : (pkg.contentPoints || [""])
+          };
+        }) : initialForm.packaging,
+        packagingFormat: 'array',
+        certifications: Array.isArray(prod.certifications)
           ? prod.certifications.map(cert => {
               // Remove _id field and ensure proper structure
               const { _id, ...cleanCert } = cert;
@@ -742,11 +910,11 @@ const handleSubmit = async (e) => {
               };
             })
           : initialForm.certifications,
-        faqs: Array.isArray(prod.faqs) && prod.faqs.length > 0 
-          ? prod.faqs 
+        faqs: Array.isArray(prod.faqs) && prod.faqs.length > 0
+          ? prod.faqs
           : initialForm.faqs,
-        related: Array.isArray(prod.related) && prod.related.length > 0 
-          ? prod.related 
+        related: Array.isArray(prod.related) && prod.related.length > 0
+          ? prod.related
           : initialForm.related,
       };
 
@@ -765,29 +933,29 @@ const handleSubmit = async (e) => {
 
       // Ensure all arrays have at least one item for editing
       const finalFormData = { ...formattedData };
-      
+
       // Ensure benefits has at least one item
-      if (!finalFormData.benefits || finalFormData.benefits.length === 0) {
+      if (benefitsFormat === 'structured' && (!finalFormData.benefits || finalFormData.benefits.length === 0)) {
         finalFormData.benefits = initialForm.benefits;
       }
-      
+
       // Ensure packaging has at least one item
       if (!finalFormData.packaging || finalFormData.packaging.length === 0) {
         finalFormData.packaging = initialForm.packaging;
       }
-      
+
       // Ensure faqs has at least one item
       if (!finalFormData.faqs || finalFormData.faqs.length === 0) {
         finalFormData.faqs = initialForm.faqs;
       }
-      
+
       // Ensure related has at least one item
       if (!finalFormData.related || finalFormData.related.length === 0) {
         finalFormData.related = initialForm.related;
       }
-      
+
       console.log('Final form data:', finalFormData);
-      
+
       // Set form data and edit ID
       setFormData(finalFormData);
       setEditId(prod._id);
@@ -807,7 +975,10 @@ const handleSubmit = async (e) => {
       await axiosInstance.delete(`/products/${id}`);
       setProducts(products.filter((p) => p._id !== id));
       if (editId === id) {
-        setFormData(initialForm);
+         setFormData({
+           ...initialForm,
+           benefitsFormat: "structured"
+         });
         setImageFiles([undefined]);
         setEditId(null);
       }
@@ -907,15 +1078,81 @@ const handleSubmit = async (e) => {
 
           <div className="mt-4">
             <RequiredLabel label="Full Description" />
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-              rows={4}
-              placeholder="Detailed description of the product"
-            />
+            <div className="space-y-4">
+              <div className="flex gap-6">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="descriptionFormat"
+                    value="paragraph"
+                    checked={formData.descriptionFormat === "paragraph"}
+                    onChange={(e) => handleDescriptionFormatChange(e.target.value)}
+                    className="mr-2"
+                  />
+                  Single Paragraph
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="descriptionFormat"
+                    value="points"
+                    checked={formData.descriptionFormat === "points"}
+                    onChange={(e) => handleDescriptionFormatChange(e.target.value)}
+                    className="mr-2"
+                  />
+                  Bullet Points
+                </label>
+              </div>
+
+              {formData.descriptionFormat === "paragraph" ? (
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  rows={4}
+                  placeholder="Detailed description of the product"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {formData.descriptionPoints.map((point, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="text-red-600">•</span>
+                      <input
+                        type="text"
+                        value={point.replace(/^\*\s*/, '')}
+                        onChange={(e) => handleDescriptionPointChange(index, e.target.value)}
+                        className="flex-1 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder={`Point ${index + 1}`}
+                        required
+                      />
+                      {formData.descriptionPoints.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeDescriptionPoint(index)}
+                          className="p-1 text-red-500 hover:text-red-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addDescriptionPoint}
+                    className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Point
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1206,8 +1443,294 @@ const handleSubmit = async (e) => {
           </div>
         </div>
 
-        {/* Dynamic Sections */}
-        {["benefits", "packaging", "faqs", "related"].map(
+        {/* Packaging Section - Special handling */}
+        <div className="mt-8 bg-gray-50 rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Packaging</h3>
+            {formData.packagingFormat === "array" && (
+              <button
+                type="button"
+                onClick={() => addArrayItem("packaging", { title: "", content: "" })}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Add Packaging Item
+              </button>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <div className="flex gap-6">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="packagingFormat"
+                  value="array"
+                  checked={formData.packagingFormat === "array"}
+                  onChange={(e) => handlePackagingFormatChange(e.target.value)}
+                  className="mr-2"
+                />
+                Structured Items
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {formData.packaging.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                No packaging items added yet. Click "Add Packaging Item" to get started.
+              </div>
+            ) : (
+              formData.packaging.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="relative p-4 bg-white rounded-md shadow-sm border border-gray-200"
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+                        Title
+                      </label>
+                      <input
+                        placeholder="Enter title"
+                        value={item.title || ""}
+                        onChange={(e) =>
+                          handleArrayChange(
+                            "packaging",
+                            idx,
+                            "title",
+                            e.target.value
+                          )
+                        }
+                        className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Content
+                      </label>
+                      <div className="space-y-4">
+                        <div className="flex gap-6">
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name={`contentFormat-${idx}`}
+                              value="paragraph"
+                              checked={item.contentFormat === "paragraph"}
+                              onChange={(e) => handlePackagingContentFormatChange(idx, e.target.value)}
+                              className="mr-2"
+                            />
+                            Single Paragraph
+                          </label>
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name={`contentFormat-${idx}`}
+                              value="points"
+                              checked={item.contentFormat === "points"}
+                              onChange={(e) => handlePackagingContentFormatChange(idx, e.target.value)}
+                              className="mr-2"
+                            />
+                            Bullet Points
+                          </label>
+                        </div>
+
+                        {item.contentFormat === "paragraph" ? (
+                          <textarea
+                            value={item.content || ""}
+                            onChange={(e) =>
+                              handleArrayChange(
+                                "packaging",
+                                idx,
+                                "content",
+                                e.target.value
+                              )
+                            }
+                            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            rows={3}
+                            placeholder="Enter content"
+                          />
+                        ) : (
+                          <div className="space-y-2">
+                            {(item.contentPoints || []).map((point, pointIdx) => (
+                              <div key={pointIdx} className="flex items-center gap-2">
+                                <span className="text-red-600">•</span>
+                                <input
+                                  type="text"
+                                  value={point.replace(/^\*\s*/, '')}
+                                  onChange={(e) => handlePackagingContentPointChange(idx, pointIdx, e.target.value)}
+                                  className="flex-1 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                  placeholder={`Point ${pointIdx + 1}`}
+                                />
+                                {(item.contentPoints || []).length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removePackagingContentPoint(idx, pointIdx)}
+                                    className="p-1 text-red-500 hover:text-red-700"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => addPackagingContentPoint(idx)}
+                              className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200"
+                            >
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                              Add Point
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeArrayItem("packaging", idx)}
+                    className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 focus:outline-none"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Benefits Section - Special handling */}
+        <div className="mt-8 bg-gray-50 rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Benefits</h3>
+            {formData.benefitsFormat === "structured" && (
+              <button
+                type="button"
+                onClick={() => addArrayItem("benefits", { title: "", description: "" })}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Add Benefit
+              </button>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <div className="flex gap-6">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="benefitsFormat"
+                  value="structured"
+                  checked={formData.benefitsFormat === "structured"}
+                  onChange={(e) => handleBenefitsFormatChange(e.target.value)}
+                  className="mr-2"
+                />
+                Structured Benefits
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {formData.benefits.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                No benefits added yet. Click "Add Benefit" to get started.
+              </div>
+            ) : (
+              formData.benefits.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="relative p-4 bg-white rounded-md shadow-sm border border-gray-200"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(item).map(([key, val]) => (
+                      <div key={key}>
+                        <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+                          {key}
+                        </label>
+                        <input
+                          placeholder={`Enter ${key.toLowerCase()}`}
+                          value={val || ""}
+                          onChange={(e) =>
+                            handleArrayChange(
+                              "benefits",
+                              idx,
+                              key,
+                              e.target.value
+                            )
+                          }
+                          className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeArrayItem("benefits", idx)}
+                    className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 focus:outline-none"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Other Dynamic Sections */}
+        {["faqs", "related"].map(
           (section) => (
             <div key={section} className="mt-8 bg-gray-50 rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
@@ -1218,11 +1741,7 @@ const handleSubmit = async (e) => {
                   type="button"
                   onClick={() => {
                     let defaultItem;
-                    if (section === 'benefits') {
-                      defaultItem = { title: "", description: "" };
-                    } else if (section === 'packaging') {
-                      defaultItem = { title: "", content: "" };
-                    } else if (section === 'faqs') {
+                    if (section === 'faqs') {
                       defaultItem = { q: "", a: "" };
                     } else if (section === 'related') {
                       defaultItem = { title: "", image: "", link: "" };
@@ -1302,10 +1821,10 @@ const handleSubmit = async (e) => {
                           d="M6 18L18 6M6 6l12 12"
                         />
                       </svg>
-                                         </button>
-                   </div>
-                 ))
-                )}
+                    </button>
+                  </div>
+                ))
+              )}
               </div>
             </div>
           )
@@ -1353,7 +1872,11 @@ const handleSubmit = async (e) => {
               type="button"
               className="flex-1 inline-flex justify-center items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
               onClick={() => {
-                setFormData(initialForm);
+                setFormData({
+                  ...initialForm,
+                  benefitsFormat: "structured",
+                  benefitsPoints: [""]
+                });
                 setImageFiles([undefined]);
                 setEditId(null);
               }}

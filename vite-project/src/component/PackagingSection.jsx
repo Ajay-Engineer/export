@@ -30,8 +30,14 @@ const PackagingSection = () => {
         className="text-3xl sm:text-4xl font-bold text-white underline text-center mb-8"
         style={{ fontFamily: 'Instrument Sans, sans-serif' }}
       >
-        Packaging
+        Packaging Standards
       </h2>
+      <div className="max-w-4xl mx-auto mb-10">
+        <h3 className="text-2xl font-semibold text-white mb-4">Benefits</h3>
+        <p className="text-lg text-white leading-relaxed">
+          Our packaging standards are designed to meet global compliance regulations, providing reliable protection for goods during long-distance transportation with a focus on universal standards for safety and security. Each product is packed precisely according to its size, ensuring minimal wasted space and maximum efficiency while reducing shipping costs and improving handling safety. We also consider climate sensitivity, regulatory compliance, and optimal packaging materials for regional transport to ensure safe arrival by land, air, or sea.
+        </p>
+      </div>
 
       <div className="max-w-6xl mx-auto space-y-10">
         {packagingTypes.map((type, index) => (

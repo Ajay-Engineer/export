@@ -9,6 +9,7 @@ import {
   Hand,
   Egg,
 } from "lucide-react";
+import React from "react";
 
 export default function ProductCategory() {
   const { category } = useParams();

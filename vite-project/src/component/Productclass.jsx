@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const ProductCard = ({ title, description, image, onLearnMore }) => {
+const ProductCard = ({ title, shortDescription, image, onLearnMore }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -31,9 +31,11 @@ const ProductCard = ({ title, description, image, onLearnMore }) => {
           onLoad={handleImageLoad}
         />
       </div>
-      <h3 className="font-bold text-lg text-gray-800 mb-2">{title}</h3>
-      <div className="min-h-[60px]">
-        <p className="text-sm text-gray-600 line-clamp-3">{description}</p>
+      <h3 className="font-bold text-lg text-gray-800 mb-2 text-center">{title}</h3>
+      <div className="min-h-[48px] flex items-center justify-center px-2">
+        <p className="text-sm text-gray-600 line-clamp-2 text-center">
+          {shortDescription || 'Click to learn more about this product'}
+        </p>
       </div>
       <button
         onClick={onLearnMore}

@@ -11,7 +11,7 @@ const NAV = [
   { id: "benefits", label: "Benefits" },
   { id: "specs", label: "Specs" },
   { id: "pack", label: "Packaging" },
-  // { id: "certs", label: "Certifications" },
+  { id: "certs", label: "Certifications" },
   { id: "faqs", label: "FAQs" },
 ];
 
@@ -26,6 +26,7 @@ export default function ProductDetailPage({
   images = [],
   mainImage = null,
   description,
+  shortDescription,
   faqs = [],
   benefits = [],
   specifications = {},
@@ -40,6 +41,7 @@ export default function ProductDetailPage({
   const [showFaqForm, setShowFaqForm] = useState(false);
   const [newBenefit, setNewBenefit] = useState({ title: '', description: '' });
   const [newFaq, setNewFaq] = useState({ q: '', a: '' });
+  const [currentCertIndex, setCurrentCertIndex] = useState(0);
   // Set initial selected image to mainImage if it exists, otherwise the first image
   const initialImage = mainImage || (images.length > 0 ? images[0] : null);
   const [selectedImage, setSelectedImage] = useState(initialImage);
@@ -87,6 +89,22 @@ export default function ProductDetailPage({
     setSelectedImage(images[prevIndex]);
   };
 
+  const handleNextCert = () => {
+    if (certifications && certifications.length > 0) {
+      setCurrentCertIndex((prevIndex) =>
+        prevIndex === certifications.length - 1 ? 0 : prevIndex + 1
+      );
+    }
+  };
+
+  const handlePrevCert = () => {
+    if (certifications && certifications.length > 0) {
+      setCurrentCertIndex((prevIndex) =>
+        prevIndex === 0 ? certifications.length - 1 : prevIndex - 1
+      );
+    }
+  };
+
   return (
     <div className="bg-[#f8f9fb] text-gray-900 w-full">
       {/* Sticky Nav + CTAs */}
@@ -115,7 +133,9 @@ export default function ProductDetailPage({
       <nav className="bg-white shadow-sm z-20 border-b w-full">
         <div className="w-full mx-auto px-6">
           <div className="flex space-x-6 overflow-x-auto py-2">
-            {NAV.map((navItem) => (
+            {NAV.filter(navItem =>
+              navItem.id !== 'certs' || (certifications && certifications.length > 0)
+            ).map((navItem) => (
               <a
                 key={navItem.id}
                 href={`#${navItem.id}`}
@@ -205,7 +225,18 @@ export default function ProductDetailPage({
       >
         <div className="max-w-[1440px] mx-auto px-6">
           <h2 className="text-2xl font-semibold mb-4">About {title}</h2>
-          <p className="text-gray-700 text-lg">{description}</p>
+          {Array.isArray(description) ? (
+            <ul className="text-gray-700 text-lg space-y-2">
+              {description.map((point, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="text-red-600 mr-2">•</span>
+                  <span>{point.replace(/^\*\s*/, '')}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-700 text-lg">{description}</p>
+          )}
         </div>
       </motion.section>
 
@@ -285,18 +316,28 @@ export default function ProductDetailPage({
             </form>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {benefits.map((b, i) => (
-              <div
-                key={i}
-                className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition"
-              >
-                <CheckCircle className="w-6 h-6 text-red-600 mb-2" />
-                <h4 className="font-semibold mb-1">{b.title || 'Benefit'}</h4>
-                <p className="text-gray-700">{b.description || 'No description available'}</p>
-              </div>
-            ))}
-          </div>
+          {Array.isArray(benefits) && benefits.length > 0 && typeof benefits[0] === 'object' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {benefits.map((b, i) => (
+                <div
+                  key={i}
+                  className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition"
+                >
+                  <CheckCircle className="w-6 h-6 text-red-600 mb-2" />
+                  <h4 className="font-semibold mb-1">{b.title || 'Benefit'}</h4>
+                  <p className="text-gray-700">{b.description || 'No description available'}</p>
+                </div>
+              ))}
+            </div>
+          ) : Array.isArray(benefits) && benefits.length > 0 ? (
+            <div className="text-gray-700 text-lg space-y-2">
+              {benefits.map((point, index) => (
+                <p key={index}>{point.replace(/^\*\s*/, '')}</p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-700 text-lg">No benefits available</p>
+          )}
         </div>
       </motion.section>
 
@@ -337,17 +378,41 @@ export default function ProductDetailPage({
       >
         <div className="max-w-[1440px] mx-auto px-6">
           <h2 className="text-2xl font-semibold mb-6">Packaging Standards</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {packaging.map((pkg, i) => (
-              <div
-                key={i}
-                className="p-6 bg-white rounded-lg shadow hover:shadow-md transition"
-              >
-                <h4 className="font-semibold mb-2">{pkg.title}</h4>
-                <p className="text-gray-700">{pkg.content}</p>
+          {Array.isArray(packaging) ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {packaging.map((pkg, i) => (
+                <div
+                  key={i}
+                  className="p-6 bg-white rounded-lg shadow hover:shadow-md transition"
+                >
+                  <h4 className="font-semibold mb-2">{pkg.title}</h4>
+                  {pkg.content && pkg.content.includes('\n') ? (
+                    <ul className="text-gray-700 space-y-1">
+                      {pkg.content.split('\n').filter(line => line.trim()).map((line, idx) => (
+                        <li key={idx} className="flex items-start">
+                          <span className="text-red-600 mr-2">•</span>
+                          <span>{line.replace(/^\*\s*/, '')}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-700">{pkg.content}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="space-y-3">
+                {Object.entries(packaging || {}).map(([key, value], i) => (
+                  <div key={i} className="flex items-start">
+                    <span className="text-red-600 mr-3 font-medium min-w-[120px]">{key}:</span>
+                    <span className="text-gray-700">{value}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       </motion.section>
 
@@ -454,7 +519,9 @@ export default function ProductDetailPage({
                 Our products meet the highest industry standards and certifications
               </p>
             </div>
-            <div className={`flex ${certifications.length === 1 ? 'justify-center' : 'justify-center flex-wrap'} gap-8 max-w-6xl mx-auto`}>
+
+            {/* Desktop: Grid Layout */}
+            <div className="hidden md:flex justify-center flex-wrap gap-8 max-w-6xl mx-auto">
               {certifications.map((cert, i) => (
                 <motion.div
                   key={i}
@@ -479,6 +546,74 @@ export default function ProductDetailPage({
                   </div>
                 </motion.div>
               ))}
+            </div>
+
+            {/* Mobile: Single Certificate with Navigation */}
+            <div className="md:hidden flex flex-col items-center">
+              <div className="relative w-full max-w-md mx-auto">
+                <motion.div
+                  key={currentCertIndex}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 p-8 border border-gray-200 hover:border-blue-300 cursor-pointer transform hover:-translate-y-2"
+                  onClick={() => window.open(formatImageUrl(certifications[currentCertIndex].image || certifications[currentCertIndex].src), '_blank')}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-48 h-48 mb-6 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl group-hover:from-blue-50 group-hover:to-blue-100 transition-all duration-300 shadow-inner">
+                      <img
+                        src={formatImageUrl(certifications[currentCertIndex].image || certifications[currentCertIndex].src)}
+                        alt={certifications[currentCertIndex].name || certifications[currentCertIndex].alt || 'Certification'}
+                        className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    {certifications[currentCertIndex].name && (
+                      <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300 mb-2">
+                        {certifications[currentCertIndex].name}
+                      </h3>
+                    )}
+                    <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+                </motion.div>
+
+                {/* Navigation Buttons */}
+                {certifications.length > 1 && (
+                  <div className="flex justify-between items-center mt-6 px-4">
+                    <button
+                      onClick={handlePrevCert}
+                      className="flex items-center justify-center w-12 h-12 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors duration-200 shadow-lg"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+
+                    {/* Certificate Indicators */}
+                    <div className="flex space-x-2">
+                      {certifications.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentCertIndex(index)}
+                          className={`w-3 h-3 rounded-full transition-colors duration-200 ${
+                            index === currentCertIndex ? 'bg-red-600' : 'bg-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handleNextCert}
+                      className="flex items-center justify-center w-12 h-12 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors duration-200 shadow-lg"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Certificate Counter */}
+                <div className="text-center mt-4 text-sm text-gray-600">
+                  {currentCertIndex + 1} of {certifications.length}
+                </div>
+              </div>
             </div>
           </div>
         </motion.section>

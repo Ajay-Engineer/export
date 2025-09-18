@@ -29,9 +29,21 @@ const productSchema = new mongoose.Schema({
     trim: true
   },
   description: {
-    type: String,
+    type: mongoose.Schema.Types.Mixed,
     required: [true, 'Description is required'],
-    trim: true
+    validate: {
+      validator: function(value) {
+        // Allow string or array of strings
+        if (typeof value === 'string') {
+          return value.trim().length > 0;
+        }
+        if (Array.isArray(value)) {
+          return value.length > 0 && value.every(item => typeof item === 'string' && item.trim().length > 0);
+        }
+        return false;
+      },
+      message: 'Description must be a non-empty string or an array of non-empty strings'
+    }
   },
   videoUrl: {
     type: String,
@@ -55,16 +67,32 @@ const productSchema = new mongoose.Schema({
       required: false
     }
   }],
-  benefits: [{
-    title: {
-      type: String,
-      required: true
-    },
-    description: {
-      type: String,
-      required: true
+  benefits: {
+    type: mongoose.Schema.Types.Mixed,
+    validate: {
+      validator: function(value) {
+        // Allow array of objects or array of strings
+        if (Array.isArray(value)) {
+          if (value.length === 0) return true;
+          // Check if it's array of objects (current format)
+          if (typeof value[0] === 'object' && value[0] !== null) {
+            return value.every(item =>
+              typeof item === 'object' &&
+              item !== null &&
+              typeof item.title === 'string' &&
+              typeof item.description === 'string' &&
+              item.title.trim().length > 0 &&
+              item.description.trim().length > 0
+            );
+          }
+          // Check if it's array of strings (new bullet points format)
+          return value.every(item => typeof item === 'string' && item.trim().length > 0);
+        }
+        return false;
+      },
+      message: 'Benefits must be an array of objects with title/description or an array of strings'
     }
-  }],
+  },
   specifications: {
     'Botanical Source': String,
     'Form': String,
@@ -75,16 +103,32 @@ const productSchema = new mongoose.Schema({
     'pH': String,
     'MOQ': String
   },
-  packaging: [{
-    title: {
-      type: String,
-      required: true
-    },
-    content: {
-      type: String,
-      required: true
+  packaging: {
+    type: mongoose.Schema.Types.Mixed,
+    validate: {
+      validator: function(value) {
+        // Allow array of objects or object with key-value pairs
+        if (Array.isArray(value)) {
+          return value.length === 0 || value.every(item =>
+            typeof item === 'object' &&
+            item !== null &&
+            typeof item.title === 'string' &&
+            typeof item.content === 'string' &&
+            item.title.trim().length > 0 &&
+            item.content.trim().length > 0
+          );
+        }
+        if (typeof value === 'object' && value !== null) {
+          // Check if it's a plain object (not array, not null)
+          return Object.keys(value).length === 0 || Object.values(value).every(val =>
+            typeof val === 'string' && val.trim().length > 0
+          );
+        }
+        return false;
+      },
+      message: 'Packaging must be an array of objects with title/content or an object with key-value pairs'
     }
-  }],
+  },
   faqs: [{
     q: {
       type: String,

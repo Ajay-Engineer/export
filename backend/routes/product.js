@@ -308,6 +308,26 @@ router.post('/', upload, asyncHandler(async (req, res) => {
       certificationsData
     } = req.body;
 
+    // Parse description - it might be a JSON string for arrays
+    let parsedDescription = description;
+    if (typeof description === 'string' && description.trim().startsWith('[')) {
+      try {
+        parsedDescription = JSON.parse(description);
+      } catch (error) {
+        console.log('Description is not JSON, using as string');
+      }
+    }
+
+    // Parse packaging - it might be a JSON string for arrays or objects
+    let parsedPackaging = packaging;
+    if (typeof packaging === 'string' && (packaging.trim().startsWith('[') || packaging.trim().startsWith('{'))) {
+      try {
+        parsedPackaging = JSON.parse(packaging);
+      } catch (error) {
+        console.log('Packaging is not JSON, using as string');
+      }
+    }
+
     console.log('Creating product with data:', {
       title,
       description,
@@ -374,13 +394,13 @@ router.post('/', upload, asyncHandler(async (req, res) => {
     const newProduct = new Product({
       title,
       slug,
-      description,
+      description: parsedDescription,
       shortDescription,
       category,
       visibility: visibility || 'public',
       specifications: safeJSONParse(specifications, {}),
       benefits: safeJSONParse(benefits, []),
-      packaging: safeJSONParse(packaging, []),
+      packaging: parsedPackaging,
       faqs: safeJSONParse(faqs, []),
       related: safeJSONParse(related, []),
       certifications: processedCertifications,
@@ -512,16 +532,36 @@ router.put('/:id', upload, asyncHandler(async (req, res) => {
       allImages = existingProduct.images || [];
     }
 
+    // Parse description - it might be a JSON string for arrays
+    let parsedDescription = req.body.description;
+    if (typeof req.body.description === 'string' && req.body.description.trim().startsWith('[')) {
+      try {
+        parsedDescription = JSON.parse(req.body.description);
+      } catch (error) {
+        console.log('Description is not JSON, using as string');
+      }
+    }
+
+    // Parse packaging - it might be a JSON string for arrays or objects
+    let parsedPackaging = req.body.packaging;
+    if (typeof req.body.packaging === 'string' && (req.body.packaging.trim().startsWith('[') || req.body.packaging.trim().startsWith('{'))) {
+      try {
+        parsedPackaging = JSON.parse(req.body.packaging);
+      } catch (error) {
+        console.log('Packaging is not JSON, using as string');
+      }
+    }
+
     // Prepare update data
     const updateData = {
       title: req.body.title,
-      description: req.body.description,
+      description: parsedDescription,
       shortDescription: req.body.shortDescription,
       category: req.body.category,
       visibility: req.body.visibility || existingProduct.visibility,
       specifications: safeJSONParse(req.body.specifications, {}),
       benefits: safeJSONParse(req.body.benefits, []),
-      packaging: safeJSONParse(req.body.packaging, []),
+      packaging: parsedPackaging,
       faqs: safeJSONParse(req.body.faqs, []),
       related: safeJSONParse(req.body.related, []),
       videoUrl: req.body.videoUrl || existingProduct.videoUrl,
